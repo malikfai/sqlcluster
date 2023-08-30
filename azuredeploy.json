@@ -27,6 +27,10 @@
       },
       "defaultValue": "Standard_D4s_v3"
     },
+    "sqlDiskSize": {
+      "type": "int",
+      "defaultValue": 1024
+    },
     "sqlWitnessVMSize": {
       "type": "string",
       "metadata": {
@@ -110,6 +114,22 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "windowsImagePublisher": {
+      "type": "string",
+      "defaultValue": "MicrosoftSQLServer"
+    },
+    "windowsImageOffer": {
+      "type": "string",
+      "defaultValue": "SQL2014SP2-WS2012R2"
+    },
+    "windowsImageSKU": {
+      "type": "string",
+      "defaultValue": "Enterprise"
+    },
+    "windowsImageVersion": {
+      "type": "string",
+      "defaultValue": "latest"
     }
   },
   "variables": {
@@ -140,6 +160,9 @@
           },
           "diskType": {
             "value": "[parameters('diskType')]"
+          },
+          "sqlDiskSize": {
+            "value": "[parameters('sqlDiskSize')]"
           },
           "dnsServerName": {
             "value": "[parameters('existingAdPDCVMName')]"
@@ -176,6 +199,18 @@
           },
           "_artifactsLocationSasToken": {
             "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "windowsImagePublisher": {
+            "value": "[parameters('windowsImagePublisher')]"
+          },
+          "windowsImageOffer": {
+            "value": "[parameters('windowsImageOffer')]"
+          },
+          "windowsImageSKU": {
+            "value": "[parameters('windowsImageSKU')]"
+          },
+          "windowsImageVersion": {
+            "value": "[parameters('windowsImageVersion')]"
           }
         }
       }

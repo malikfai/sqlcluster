@@ -44,6 +44,10 @@
     "sqlVMSize": {
       "type": "string"
     },
+    "sqlDiskSize": {
+      "type": "int",
+      "defaultValue": 1024
+    },
     "sqlWitnessVMSize": {
       "type": "string"
     },
@@ -77,7 +81,6 @@
     }
   },
   "variables": {
-    "sqlDiskSize": 1000,
     "sqlWitnessDiskSize": 128,
     "sqlNamePrefix": "[concat(parameters('namePrefix'),'-sql-')]",
     "sqlAvailabilitySetName": "[concat(variables('sqlNamePrefix'),'as')]",
@@ -220,6 +223,39 @@
       }
     },
     {
+      "type": "Microsoft.Compute/disks",
+      "apiVersion": "2018-06-01",
+      "name": "[concat(variables('sqlNamePrefix'),'-sharedDataDisk')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Premium_LRS"
+      },
+      "properties": {
+        "creationData": {
+          "createOption": "Empty"
+        },
+        "diskSizeGB": "[parameters('sqlDiskSize')]",
+        "maxShares": 2
+      }
+    },
+    {
+      "type": "Microsoft.Compute/disks",
+      "apiVersion": "2018-06-01",
+      "name": "[concat(variables('sqlNamePrefix'),'-sharedLogDisk')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Premium_LRS"
+      },
+      "properties": {
+        "creationData": {
+          "createOption": "Empty"
+        },
+        "diskSizeGB": "[parameters('sqlDiskSize')]",
+        "maxShares": 2
+      }
+    },
+
+    {
       "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('sqlNamePrefix'), copyindex())]",
@@ -262,22 +298,18 @@
           "dataDisks": [
             {
               "lun": 0,
-              "name": "[concat(variables('sqlNamePrefix'), copyindex(), '_datadisk1')]",
-              "createOption": "Empty",
-              "diskSizeGB": "[variables('sqlDiskSize')]",
-              "caching": "None",
+              "name": "[concat(variables('sqlNamePrefix'), '-sharedDataDisk')]",
+              "createOption": "Attach",
               "managedDisk": {
-                "storageAccountType": "[parameters('diskType')]"
+                "id": "[resourceId('Microsoft.Compute/disks/', concat(variables('vmName'),'-sharedDataDisk'))]"
               }
             },
             {
               "lun": 1,
-              "name": "[concat(variables('sqlNamePrefix'), copyindex(), '_logdisk1')]",
-              "createOption": "Empty",
-              "diskSizeGB": "[variables('sqlDiskSize')]",
-              "caching": "None",
+              "name": "[concat(variables('sqlNamePrefix'), '-sharedLogDisk')]",
+              "createOption": "Attach",
               "managedDisk": {
-                "storageAccountType": "[parameters('diskType')]"
+                "id": "[resourceId('Microsoft.Compute/disks/', concat(variables('vmName'),'-sharedLogDisk'))]"
               }
             }
           ]
