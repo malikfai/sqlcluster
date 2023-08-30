@@ -224,7 +224,7 @@
     },
     {
       "type": "Microsoft.Compute/disks",
-      "apiVersion": "2018-06-01",
+      "apiVersion": "2019-07-01",
       "name": "[concat(variables('sqlNamePrefix'),'-sharedDataDisk')]",
       "location": "[resourceGroup().location]",
       "sku": {
@@ -240,7 +240,7 @@
     },
     {
       "type": "Microsoft.Compute/disks",
-      "apiVersion": "2018-06-01",
+      "apiVersion": "2019-07-01",
       "name": "[concat(variables('sqlNamePrefix'),'-sharedLogDisk')]",
       "location": "[resourceGroup().location]",
       "sku": {
