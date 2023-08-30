@@ -225,7 +225,7 @@
     {
       "type": "Microsoft.Compute/disks",
       "apiVersion": "2019-07-01",
-      "name": "[concat(variables('sqlNamePrefix'),'-sharedDataDisk')]",
+      "name": "[concat(variables('sqlNamePrefix'),'sharedDataDisk')]",
       "location": "[resourceGroup().location]",
       "sku": {
         "name": "Premium_LRS"
@@ -241,7 +241,7 @@
     {
       "type": "Microsoft.Compute/disks",
       "apiVersion": "2019-07-01",
-      "name": "[concat(variables('sqlNamePrefix'),'-sharedLogDisk')]",
+      "name": "[concat(variables('sqlNamePrefix'),'sharedLogDisk')]",
       "location": "[resourceGroup().location]",
       "sku": {
         "name": "Premium_LRS"
@@ -298,18 +298,18 @@
           "dataDisks": [
             {
               "lun": 0,
-              "name": "[concat(variables('sqlNamePrefix'), '-sharedDataDisk')]",
+              "name": "[concat(variables('sqlNamePrefix'), 'sharedDataDisk')]",
               "createOption": "Attach",
               "managedDisk": {
-                "id": "[resourceId('Microsoft.Compute/disks/', concat(variables('vmName'),'-sharedDataDisk'))]"
+                "id": "[resourceId('Microsoft.Compute/disks/', concat(variables('sqlNamePrefix'),'sharedDataDisk'))]"
               }
             },
             {
               "lun": 1,
-              "name": "[concat(variables('sqlNamePrefix'), '-sharedLogDisk')]",
+              "name": "[concat(variables('sqlNamePrefix'), 'sharedLogDisk')]",
               "createOption": "Attach",
               "managedDisk": {
-                "id": "[resourceId('Microsoft.Compute/disks/', concat(variables('vmName'),'-sharedLogDisk'))]"
+                "id": "[resourceId('Microsoft.Compute/disks/', concat(variables('sqlNamePrefix'),'sharedLogDisk'))]"
               }
             }
           ]
