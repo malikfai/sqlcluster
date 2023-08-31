@@ -2,7 +2,7 @@ Connect-AzAccount -Environmentname AzureUSGovernment
 
 $deploymentName = "deploy-sqlcluster"
 $resourceGroupName = "sqlcluster"
-$namePrefix = "fm1"
+$namePrefix = "fm-ag"
 $existingDomainName = "contoso.local"
 $adminUsername = "fmadmin"
 $adminPassword = Read-Host -AsSecureString -Prompt "Enter Admin Password"
@@ -17,7 +17,7 @@ $windowsImageOffer = "SQL2014SP2-WS2012R2"
 $windowsImageSKU = "Enterprise"
 $windowsImageVersion = "latest"
 $sqlDiskSize = 1024
-$_artifactsLocation = "https://raw.githubusercontent.com/malikfai/sqlcluster/main/"
+$_artifactsLocation = "https://raw.githubusercontent.com/malikfai/sqlcluster/main/AlwaysOnAG/"
 
 $templateParameterObject = @{
     "namePrefix" = $namePrefix

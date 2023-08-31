@@ -223,39 +223,6 @@
       }
     },
     {
-      "type": "Microsoft.Compute/disks",
-      "apiVersion": "2019-07-01",
-      "name": "[concat(variables('sqlNamePrefix'),'sharedDataDisk')]",
-      "location": "[resourceGroup().location]",
-      "sku": {
-        "name": "Premium_LRS"
-      },
-      "properties": {
-        "creationData": {
-          "createOption": "Empty"
-        },
-        "diskSizeGB": "[parameters('sqlDiskSize')]",
-        "maxShares": 2
-      }
-    },
-    {
-      "type": "Microsoft.Compute/disks",
-      "apiVersion": "2019-07-01",
-      "name": "[concat(variables('sqlNamePrefix'),'sharedLogDisk')]",
-      "location": "[resourceGroup().location]",
-      "sku": {
-        "name": "Premium_LRS"
-      },
-      "properties": {
-        "creationData": {
-          "createOption": "Empty"
-        },
-        "diskSizeGB": "[parameters('sqlDiskSize')]",
-        "maxShares": 2
-      }
-    },
-
-    {
       "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('sqlNamePrefix'), copyindex())]",
@@ -297,19 +264,13 @@
           },
           "dataDisks": [
             {
+              "name": "[concat(variables('sqlNamePrefix'), copyindex(), '_datadisk1')]",
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": "[parameters('sqlDiskSize')]",
               "lun": 0,
-              "name": "[concat(variables('sqlNamePrefix'), 'sharedDataDisk')]",
-              "createOption": "Attach",
               "managedDisk": {
-                "id": "[resourceId('Microsoft.Compute/disks/', concat(variables('sqlNamePrefix'),'sharedDataDisk'))]"
-              }
-            },
-            {
-              "lun": 1,
-              "name": "[concat(variables('sqlNamePrefix'), 'sharedLogDisk')]",
-              "createOption": "Attach",
-              "managedDisk": {
-                "id": "[resourceId('Microsoft.Compute/disks/', concat(variables('sqlNamePrefix'),'sharedLogDisk'))]"
+                "storageAccountType": "[parameters('diskType')]"
               }
             }
           ]
