@@ -272,6 +272,16 @@
               "managedDisk": {
                 "storageAccountType": "[parameters('diskType')]"
               }
+            },
+            {
+              "lun": 1,
+              "name": "[concat(variables('sqlNamePrefix'), copyindex(), '_logdisk1')]",
+              "createOption": "Empty",
+              "diskSizeGB": "[variables('sqlDiskSize')]",
+              "caching": "None",
+              "managedDisk": {
+                "storageAccountType": "[parameters('diskType')]"
+              }
             }
           ]
         },
