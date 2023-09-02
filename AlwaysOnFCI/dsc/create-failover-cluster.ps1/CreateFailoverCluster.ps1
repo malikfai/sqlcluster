@@ -155,7 +155,7 @@ configuration CreateFailoverCluster
             LocalPort = $DatabaseEnginePort -as [String]
             Ensure = "Present"
         }
-
+<#
         xFirewall DatabaseMirroringFirewallRule
         {
             Direction = "Inbound"
@@ -169,7 +169,7 @@ configuration CreateFailoverCluster
             LocalPort = "5022"
             Ensure = "Present"
         }
-
+#>
         xFirewall ListenerFirewallRule
         {
             Direction = "Inbound"
