@@ -32,9 +32,11 @@ configuration PrepareAlwaysOnSqlServer
     [System.Management.Automation.PSCredential]$SQLCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SQLServicecreds.UserName)", $SQLServicecreds.Password)
 
     WaitForSqlSetup
-<#
+
     Node localhost
     {
+
+<#
         xWaitforDisk Disk2
         {
              DiskNumber = 2
