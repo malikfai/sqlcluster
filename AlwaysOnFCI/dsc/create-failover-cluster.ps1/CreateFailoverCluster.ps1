@@ -73,7 +73,7 @@ configuration CreateFailoverCluster
 
     Node localhost
     {
-
+<#
         xWaitforDisk Disk2
         {
              DiskNumber = 2
@@ -99,7 +99,7 @@ configuration CreateFailoverCluster
             DiskNumber = 3
             DriveLetter = "G"
         }
-
+#>
         WindowsFeature FC
         {
             Name = "Failover-Clustering"
