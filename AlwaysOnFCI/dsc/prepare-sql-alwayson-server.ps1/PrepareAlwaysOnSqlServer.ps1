@@ -36,33 +36,6 @@ configuration PrepareAlwaysOnSqlServer
     Node localhost
     {
 
-<#
-        xWaitforDisk Disk2
-        {
-             DiskNumber = 2
-             RetryIntervalSec =$RetryIntervalSec
-             RetryCount = $RetryCount
-        }
-
-        cDiskNoRestart DataDisk
-        {
-            DiskNumber = 2
-            DriveLetter = "F"
-        }
-
-        xWaitforDisk Disk3
-        {
-             DiskNumber = 3
-             RetryIntervalSec =$RetryIntervalSec
-             RetryCount = $RetryCount
-        }
-
-        cDiskNoRestart LogDisk
-        {
-            DiskNumber = 3
-            DriveLetter = "G"
-        }
-#>
         WindowsFeature FC
         {
             Name = "Failover-Clustering"
@@ -109,21 +82,7 @@ configuration PrepareAlwaysOnSqlServer
             LocalPort = $DatabaseEnginePort1 -as [String]
             Ensure = "Present"
         }
-<#
-        xFirewall DatabaseMirroringFirewallRule
-        {
-            Direction = "Inbound"
-            Name = "SQL-Server-Database-Mirroring-TCP-In"
-            DisplayName = "SQL Server Database Mirroring (TCP-In)"
-            Description = "Inbound rule for SQL Server to allow TCP traffic for the Database Mirroring."
-            DisplayGroup = "SQL Server"
-            State = "Enabled"
-            Access = "Allow"
-            Protocol = "TCP"
-            LocalPort = "5022"
-            Ensure = "Present"
-        }
-#>
+
         xFirewall ListenerFirewallRule1
         {
             Direction = "Inbound"
@@ -166,19 +125,7 @@ configuration PrepareAlwaysOnSqlServer
             Credential = $Admincreds
             DependsOn = "[xADUser]CreateSqlServerServiceAccount"
         }
-<#
-        xSqlServer ConfigureSqlServerWithAlwaysOn
-        {
-            InstanceName = $env:COMPUTERNAME
-            SqlAdministratorCredential = $Admincreds
-            ServiceCredential = $SQLCreds
-            MaxDegreeOfParallelism = 1
-            FilePath = "F:\DATA"
-            LogPath = "G:\LOG"
-            DomainAdministratorCredential = $DomainFQDNCreds
-            DependsOn = "[xSqlLogin]AddSqlServerServiceAccountToSysadminServerRole"
-        }
-#>
+
         LocalConfigurationManager 
         {
             RebootNodeIfNeeded = $True
