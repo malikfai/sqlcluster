@@ -1,5 +1,5 @@
 #
-# Copyright="  Microsoft Corporation. All rights reserved."
+# Copyright="� Microsoft Corporation. All rights reserved."
 #
 
 configuration PrepareAlwaysOnSqlServer
@@ -35,8 +35,6 @@ configuration PrepareAlwaysOnSqlServer
 
     Node localhost
     {
-
-
         xWaitforDisk Disk2
         {
              DiskNumber = 2
@@ -109,7 +107,7 @@ configuration PrepareAlwaysOnSqlServer
             LocalPort = $DatabaseEnginePort1 -as [String]
             Ensure = "Present"
         }
-<#
+
         xFirewall DatabaseMirroringFirewallRule
         {
             Direction = "Inbound"
@@ -123,7 +121,7 @@ configuration PrepareAlwaysOnSqlServer
             LocalPort = "5022"
             Ensure = "Present"
         }
-#>
+
         xFirewall ListenerFirewallRule1
         {
             Direction = "Inbound"
@@ -166,7 +164,7 @@ configuration PrepareAlwaysOnSqlServer
             Credential = $Admincreds
             DependsOn = "[xADUser]CreateSqlServerServiceAccount"
         }
-<#
+
         xSqlServer ConfigureSqlServerWithAlwaysOn
         {
             InstanceName = $env:COMPUTERNAME
@@ -178,7 +176,7 @@ configuration PrepareAlwaysOnSqlServer
             DomainAdministratorCredential = $DomainFQDNCreds
             DependsOn = "[xSqlLogin]AddSqlServerServiceAccountToSysadminServerRole"
         }
-#>
+
         LocalConfigurationManager 
         {
             RebootNodeIfNeeded = $True
