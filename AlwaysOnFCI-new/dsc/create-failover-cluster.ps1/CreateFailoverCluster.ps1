@@ -158,20 +158,6 @@ configuration CreateFailoverCluster
             Ensure = "Present"
         }
 
-        xFirewall DatabaseMirroringFirewallRule
-        {
-            Direction = "Inbound"
-            Name = "SQL-Server-Database-Mirroring-TCP-In"
-            DisplayName = "SQL Server Database Mirroring (TCP-In)"
-            Description = "Inbound rule for SQL Server to allow TCP traffic for the Database Mirroring."
-            DisplayGroup = "SQL Server"
-            State = "Enabled"
-            Access = "Allow"
-            Protocol = "TCP"
-            LocalPort = "5022"
-            Ensure = "Present"
-        }
-
         xFirewall ListenerFirewallRule
         {
             Direction = "Inbound"
@@ -249,19 +235,6 @@ configuration CreateFailoverCluster
             DomainAdministratorCredential = $DomainCreds
         }
 
-        xSqlServer ConfigureSqlServerWithAlwaysOn
-        {
-            InstanceName = $env:COMPUTERNAME
-            SqlAdministratorCredential = $Admincreds
-            ServiceCredential = $SQLCreds
-            Hadr = "Enabled"
-            MaxDegreeOfParallelism = 1
-            FilePath = "F:\DATA"
-            LogPath = "G:\LOG"
-            DomainAdministratorCredential = $DomainFQDNCreds
-            DependsOn = "[xCluster]FailoverCluster"
-        }
-
         xSQLAddListenerIPToDNS AddLoadBalancer
         {
             LBName = $LBName
@@ -269,49 +242,9 @@ configuration CreateFailoverCluster
             LBAddress = $LBAddress
             DNSServerName = $DNSServerName
             DomainName = $DomainName
-            DependsOn = "[xSqlServer]ConfigureSqlServerWithAlwaysOn"
-        }
-
-        xSqlEndpoint SqlAlwaysOnEndpoint
-        {
-            InstanceName = $env:COMPUTERNAME
-            Name = $SqlAlwaysOnEndpointName
-            PortNumber = 5022
-            AllowedUser = $SQLServiceCreds.UserName
-            SqlAdministratorCredential = $SQLCreds
-            DependsOn = "[xSqlServer]ConfigureSqlServerWithAlwaysOn"
-        }
-
-        xSqlServer ConfigureSqlServerSecondaryWithAlwaysOn
-        {
-            InstanceName = $SecondaryReplica
-            SqlAdministratorCredential = $Admincreds
-            Hadr = "Enabled"
-            DomainAdministratorCredential = $DomainFQDNCreds
             DependsOn = "[xCluster]FailoverCluster"
         }
-
-        xSqlEndpoint SqlSecondaryAlwaysOnEndpoint
-        {
-            InstanceName = $SecondaryReplica
-            Name = $SqlAlwaysOnEndpointName
-            PortNumber = 5022
-            AllowedUser = $SQLServiceCreds.UserName
-            SqlAdministratorCredential = $SQLCreds
-	    DependsOn="[xSqlServer]ConfigureSqlServerSecondaryWithAlwaysOn"
-        }
-        
-        xSqlAvailabilityGroup SqlAG
-        {
-            Name = $SqlAlwaysOnAvailabilityGroupName
-            ClusterName = $ClusterName
-            InstanceName = $env:COMPUTERNAME
-            PortNumber = 5022
-            DomainCredential =$DomainCreds
-            SqlAdministratorCredential = $Admincreds
-	        DependsOn="[xSqlEndpoint]SqlSecondaryAlwaysOnEndpoint"
-        }
-           
+          
         xSqlAvailabilityGroupListener SqlAGListener
         {
             Name = $SqlAlwaysOnAvailabilityGroupListenerName
@@ -323,29 +256,10 @@ configuration CreateFailoverCluster
             InstanceName = $env:COMPUTERNAME
             DomainCredential = $DomainCreds
             SqlAdministratorCredential = $Admincreds
-            DependsOn = "[xSqlAvailabilityGroup]SqlAG"
+            DependsOn = "[xSQLAddListenerIPToDNS]AddLoadBalancer"
         }
 
-        Script "UninstallUnusedSqlFeatures" {
-            PsDscRunAsCredential = $Admincreds
-            SetScript = {
-                try {
-                    $sqlSetupPath = Join-Path $using:SqlSetupFolder 'setup.exe'
-                    $sqlSetupArgs = '/Action=Uninstall /FEATURES=SQL, AS, RS, IS, MDS, Tools /INSTANCENAME=MSSQLSERVER /Quiet'
-                    $process = Start-Process -FilePath $sqlSetupPath -ArgumentList $sqlSetupArgs -PassThru -Wait
-                    $process.WaitForExit()
-                }
-                catch {
-                    throw "Error uninstalling SQL features"
-                }
-
-            }
-            GetScript = { @{} }
-            TestScript = {
-                return $false
-            }
-        }
-        
+                
         LocalConfigurationManager 
         {
             RebootNodeIfNeeded = $true

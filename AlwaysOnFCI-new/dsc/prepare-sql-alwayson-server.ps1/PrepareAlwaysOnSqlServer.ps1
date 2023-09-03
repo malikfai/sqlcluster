@@ -110,20 +110,7 @@ configuration PrepareAlwaysOnSqlServer
             Ensure = "Present"
         }
 
-        xFirewall DatabaseMirroringFirewallRule
-        {
-            Direction = "Inbound"
-            Name = "SQL-Server-Database-Mirroring-TCP-In"
-            DisplayName = "SQL Server Database Mirroring (TCP-In)"
-            Description = "Inbound rule for SQL Server to allow TCP traffic for the Database Mirroring."
-            DisplayGroup = "SQL Server"
-            State = "Enabled"
-            Access = "Allow"
-            Protocol = "TCP"
-            LocalPort = "5022"
-            Ensure = "Present"
-        }
-
+       
         xFirewall ListenerFirewallRule1
         {
             Direction = "Inbound"
@@ -166,39 +153,7 @@ configuration PrepareAlwaysOnSqlServer
             Credential = $Admincreds
             DependsOn = "[xADUser]CreateSqlServerServiceAccount"
         }
-
-        xSqlServer ConfigureSqlServerWithAlwaysOn
-        {
-            InstanceName = $env:COMPUTERNAME
-            SqlAdministratorCredential = $Admincreds
-            ServiceCredential = $SQLCreds
-            MaxDegreeOfParallelism = 1
-            FilePath = "F:\DATA"
-            LogPath = "G:\LOG"
-            DomainAdministratorCredential = $DomainFQDNCreds
-            DependsOn = "[xSqlLogin]AddSqlServerServiceAccountToSysadminServerRole"
-        }
-
-        Script "UninstallUnusedSqlFeatures" {
-            PsDscRunAsCredential = $Admincreds
-            SetScript = {
-                try {
-                    $sqlSetupPath = Join-Path $using:SqlSetupFolder 'setup.exe'
-                    $sqlSetupArgs = '/Action=Uninstall /FEATURES=SQL, AS, RS, IS, MDS, Tools /INSTANCENAME=MSSQLSERVER /Quiet'
-                    $process = Start-Process -FilePath $sqlSetupPath -ArgumentList $sqlSetupArgs -PassThru -Wait
-                    $process.WaitForExit()
-                }
-                catch {
-                    throw "Error uninstalling SQL features"
-                }
-
-            }
-            GetScript = { @{} }
-            TestScript = {
-                return $false
-            }
-        }
-
+        
         LocalConfigurationManager 
         {
             RebootNodeIfNeeded = $True
