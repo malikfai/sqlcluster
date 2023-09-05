@@ -26,14 +26,7 @@ configuration PrepareAlwaysOnSqlServer
         [Int]$RetryIntervalSec=30
     )
 
-    Import-DscResource -ModuleName xComputerManagement
-    Import-DscResource -ModuleName CDisk
-    Import-DscResource -ModuleName xActiveDirectory
-    Import-DscResource -ModuleName XDisk
-    Import-DscResource -ModuleName xSql
-    Import-DscResource -ModuleName xSQLServer
-    Import-DscResource -ModuleName xSQLps
-    Import-DscResource -ModuleName xNetworking
+    Import-DscResource -ModuleName xComputerManagement,CDisk,xActiveDirectory,XDisk,xSql, xSQLServer, xSQLps,xNetworking
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential]$DomainFQDNCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential]$SQLCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SQLServicecreds.UserName)", $SQLServicecreds.Password)
