@@ -1,0 +1,83 @@
+.NAME
+    ClusterIPAddress
+
+.DESCRIPTION
+    Used to configure IP addresses for a failover cluster. Ensures that a specific IP address is either present or absent from the cluster.
+
+    ## Requirements
+
+    * Target machine must be running Windows Server 2008 R2 or later.
+
+.PARAMETER IPAddress
+    Key - String
+    IP address to add or remove from the Failover Cluster
+
+.PARAMETER AddressMask
+    Key - String
+    The address mask for the IP address in the format '255.255.255.0'.
+
+.PARAMETER Ensure
+    Write - String
+    Allowed values: Present, Absent
+    Enforce whether the IP address is present or absent from the Failover Cluster
+
+.EXAMPLE 1
+
+This example shows how to add two failover over cluster disk resources to the
+failover cluster.
+
+.NOTES
+This example assumes the failover cluster is already present.
+
+Configuration ClusterIPAddress_AddClusterIPAddress
+{
+    Import-DscResource -ModuleName FailoverClusterDsc
+
+    Node localhost
+    {
+        ClusterIPAddress 'AddClusterIPAddress_192.168.1.25'
+        {
+            IPAddress   = '192.168.1.25'
+            Ensure      = 'Present'
+            AddressMask = '255.255.255.0'
+        }
+
+        ClusterIPAddress 'AddClusterIPAddress_10.10.10.25'
+        {
+            IPAddress   = '10.10.10.25'
+            Ensure      = 'Present'
+            AddressMask = '255.255.0.0'
+        }
+    }
+}
+
+.EXAMPLE 2
+
+This example shows how to add two failover over cluster disk resources to the
+failover cluster.
+
+.NOTES
+This example assumes the failover cluster is already present.
+
+Configuration ClusterIPAddress_RemoveClusterIPAddress
+{
+    Import-DscResource -ModuleName FailoverClusterDsc
+
+    Node localhost
+    {
+        ClusterIPAddress 'RemoveClusterIPAddress_192.168.1.25'
+        {
+            IPAddress   = '192.168.1.25'
+            Ensure      = 'Absent'
+            AddressMask = '255.255.255.0'
+        }
+
+        ClusterIPAddress 'RemoveClusterIPAddress_10.10.10.25'
+        {
+            IPAddress   = '10.10.10.25'
+            Ensure      = 'Absent'
+            AddressMask = '255.255.0.0'
+        }
+    }
+}
+

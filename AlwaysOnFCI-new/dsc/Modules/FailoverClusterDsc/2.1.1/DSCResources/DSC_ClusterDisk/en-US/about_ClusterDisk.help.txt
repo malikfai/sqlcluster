@@ -1,0 +1,83 @@
+.NAME
+    ClusterDisk
+
+.DESCRIPTION
+    Configures shared disks in a cluster.
+
+    ## Requirements
+
+    * Target machine must be running Windows Server 2008 R2 or later.
+
+.PARAMETER Number
+    Key - String
+    The disk number of the cluster disk.
+
+.PARAMETER Ensure
+    Write - String
+    Allowed values: Present, Absent
+    Define if the cluster disk should be added (Present) or removed (Absent). Default value is 'Present'.
+
+.PARAMETER Label
+    Write - String
+    The disk label that should be assigned to the disk on the Failover Cluster disk resource.
+
+.EXAMPLE 1
+
+This example shows how to add two failover over cluster disk resources to the
+failover cluster.
+
+.NOTES
+This example assumes the failover cluster is already present.
+
+Configuration ClusterDisk_AddClusterDiskConfig
+{
+    Import-DscResource -ModuleName FailoverClusterDsc
+
+    Node localhost
+    {
+        ClusterDisk 'AddClusterDisk-SQL2017-DATA'
+        {
+            Number = 1
+            Ensure = 'Present'
+            Label  = 'SQL2016-DATA'
+        }
+
+        ClusterDisk 'AddClusterDisk-SQL2017-LOG'
+        {
+            Number = 2
+            Ensure = 'Present'
+            Label  = 'SQL2016-LOG'
+        }
+    }
+}
+
+.EXAMPLE 2
+
+This example shows how to remove two failover over cluster disk resources from
+the failover cluster.
+
+.NOTES
+This example assumes the failover cluster is already present.
+
+Configuration ClusterDisk_RemoveClusterDiskConfig
+{
+    Import-DscResource -ModuleName FailoverClusterDsc
+
+    Node localhost
+    {
+        ClusterDisk 'AddClusterDisk-SQL2017-DATA'
+        {
+            Number = 1
+            Ensure = 'Absent'
+            Label  = 'SQL2016-DATA'
+        }
+
+        ClusterDisk 'AddClusterDisk-SQL2017-LOG'
+        {
+            Number = 2
+            Ensure = 'Absent'
+            Label  = 'SQL2016-LOG'
+        }
+    }
+}
+

@@ -1,0 +1,87 @@
+.NAME
+    ClusterNetwork
+
+.DESCRIPTION
+    Configures a cluster network in a failover cluster.
+
+    This resource is only able to change properties on cluster networks.
+    To add or remove networks from the cluster, add or remove them from
+    the cluster members. By adding a new subnet on one of the cluster
+    nodes, the network will be added to the cluster, and metadata can be
+    set using the ClusterNetwork module.
+
+    ## Requirements
+
+    * Target machine must be running Windows Server 2008 R2 or later.
+
+    ## Parameters
+
+    ### Role
+
+    This parameter sets the role of the cluster network. If the cluster network role
+    is not in desired state it will change to match this role.
+
+    The cluster network role can be set to either the value 0, 1 or 3.
+
+    0 = Do not allow cluster network communication
+    1 = Allow cluster network communication only
+    3 = Allow cluster network communication and client connectivity
+
+    See this article for more information about cluster network role values;
+    https://blogs.technet.microsoft.com/askcore/2014/02/19/configuring-windows-failover-cluster-networks/
+
+.PARAMETER Address
+    Key - String
+    The address for the cluster network in the format '10.0.0.0'.
+
+.PARAMETER AddressMask
+    Key - String
+    The address mask for the cluster network in the format '255.255.255.0'.
+
+.PARAMETER Name
+    Write - String
+    The name of the cluster network. If the cluster network name is not in desired state it will be renamed to match this name.
+
+.PARAMETER Role
+    Write - String
+    Allowed values: 0, 1, 3
+    The role of the cluster network. If the cluster network role is not in desired state it will change to match this role.
+
+.PARAMETER Metric
+    Write - String
+    The metric number for the cluster network. If the cluster network metric number is not in desired state it will be changed to match this metric number.
+
+.EXAMPLE 1
+
+This example shows how to change the properties Name, Role and Metric of two
+failover cluster network resources in the failover cluster.
+
+.NOTES
+This example assumes the failover cluster is already present.
+
+Configuration ClusterNetwork_ChangeClusterNetworkConfig
+{
+    Import-DscResource -ModuleName FailoverClusterDsc
+
+    Node localhost
+    {
+        ClusterNetwork 'ChangeNetwork-10'
+        {
+            Address     = '10.0.0.0'
+            AddressMask = '255.255.255.0'
+            Name        = 'Client1'
+            Role        = '3'
+            Metric      = '10'
+        }
+
+        ClusterNetwork 'ChangeNetwork-192'
+        {
+            Address     = '192.168.0.0'
+            AddressMask = '255.255.255.0'
+            Name        = 'Heartbeat'
+            Role        = '1'
+            Metric      = '200'
+        }
+    }
+}
+
