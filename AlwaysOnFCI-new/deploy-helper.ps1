@@ -1,8 +1,8 @@
 Connect-AzAccount -Environmentname AzureUSGovernment
 
-$deploymentName = "deploy-sqlcluster"
+$deploymentName = "deploy-sqlcluster-fci"
 $resourceGroupName = "sqlcluster"
-$namePrefix = "fm-ag"
+$namePrefix = "fm-fci"
 $existingDomainName = "contoso.local"
 $adminUsername = "fmadmin"
 $adminPassword = "!Welcome2023"
