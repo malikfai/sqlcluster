@@ -52,7 +52,7 @@
           "properties": {
             "DomainName": "[parameters('domainName')]",
             "DomainAdminCredential": {
-              "userName": "[parameters('domainName')]\\[parameters('adminUsername')]",
+              "userName": "[parameters('adminUsername')]",
               "password": "PrivateSettingsRef:adminPassword"
             },
             "SharePath": "[parameters('sharePath')]"

@@ -34,7 +34,7 @@ configuration CreateFileShareWitness
             RetryCount = 30
         }
 
-        Disk FVolume {
+        Disk DataDisk {
             DiskId = "2"
             DriveLetter = "F"
             DependsOn = "[WaitForDisk]Disk2"
