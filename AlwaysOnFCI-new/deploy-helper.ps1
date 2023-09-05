@@ -1,8 +1,8 @@
 Connect-AzAccount -Environmentname AzureUSGovernment
 
-$deploymentName = "deploy-sqlcluster-fci"
+$deploymentName = "deploy-sqlcluster"
 $resourceGroupName = "sqlcluster"
-$namePrefix = "fm-fci"
+$namePrefix = "fm-ag"
 $existingDomainName = "contoso.local"
 $adminUsername = "fmadmin"
 $adminPassword = "!Welcome2023"
@@ -20,7 +20,7 @@ $windowsImageOffer = "SQL2014SP2-WS2012R2"
 $windowsImageSKU = "Enterprise"
 $windowsImageVersion = "latest"
 $sqlDiskSize = 1024
-$_artifactsLocation = "https://raw.githubusercontent.com/malikfai/sqlcluster/main/AlwaysOnFCI-new/"
+$_artifactsLocation = "https://raw.githubusercontent.com/malikfai/sqlcluster/main/AlwaysOnAG/"
 
 $templateParameterObject = @{
     "namePrefix" = $namePrefix
