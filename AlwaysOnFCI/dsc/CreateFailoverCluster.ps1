@@ -7,58 +7,80 @@ configuration CreateFailoverCluster
     param
     (
         [Parameter(Mandatory)]
-        [String]$DomainName,
+        [String]
+        $DomainName,
 
         [Parameter(Mandatory)]
-        [System.Management.Automation.PSCredential]$Admincreds,
+        [System.Management.Automation.PSCredential]
+        $Admincreds,
 
         [Parameter(Mandatory)]
-        [System.Management.Automation.PSCredential]$SQLServiceCreds,
+        [System.Management.Automation.PSCredential]
+        $SQLServiceCreds,
 
-        [System.Management.Automation.PSCredential]$SQLAuthCreds,
-
-        [Parameter(Mandatory)]
-        [String]$ClusterName,
-
-        [Parameter(Mandatory)]
-        [String]$SharePath,
+        [System.Management.Automation.PSCredential]
+        $SQLAuthCreds,
 
         [Parameter(Mandatory)]
-        [String[]]$Nodes,
+        [String]
+        $ClusterName,
 
         [Parameter(Mandatory)]
-        [String]$SqlAlwaysOnAvailabilityGroupName,
+        [String]
+        $SharePath,
 
         [Parameter(Mandatory)]
-        [String]$SqlAlwaysOnAvailabilityGroupListenerName,
-
-        [UInt32]$SqlAlwaysOnAvailabilityGroupListenerPort=1433,
-
-        [Parameter(Mandatory)]
-        [String]$LBName,
+        [String[]]
+        $Nodes,
 
         [Parameter(Mandatory)]
-        [String]$LBAddress,
+        [String]
+        $SqlAlwaysOnAvailabilityGroupName,
 
         [Parameter(Mandatory)]
-        [String]$PrimaryReplica,
+        [String]
+        $SqlAlwaysOnAvailabilityGroupListenerName,
+
+        [UInt32]
+        $SqlAlwaysOnAvailabilityGroupListenerPort = 1433,
 
         [Parameter(Mandatory)]
-        [String]$SecondaryReplica,
+        [String]
+        $LBName,
 
         [Parameter(Mandatory)]
-        [String]$SqlAlwaysOnEndpointName,
+        [String]
+        $LBAddress,
 
-        [String]$DNSServerName='dc-pdc',
+        [Parameter(Mandatory)]
+        [String]
+        $PrimaryReplica,
 
-        [UInt32]$DatabaseEnginePort = 1433,
+        [Parameter(Mandatory)]
+        [String]
+        $SecondaryReplica,
 
-        [String]$DomainNetbiosName=(Get-NetBIOSName -DomainName $DomainName),
+        [Parameter(Mandatory)]
+        [String]
+        $SqlAlwaysOnEndpointName,
 
-        [String[]]$DatabaseNames,
-        [Int]$RetryCount=20,
-        [Int]$RetryIntervalSec=30
+        [String]
+        $DNSServerName = 'dc-pdc',
 
+        [UInt32]
+        $DatabaseEnginePort = 1433,
+
+        [String]
+        $DomainNetbiosName = (Get-NetBIOSName -DomainName $DomainName),
+
+        [String[]]
+        $DatabaseNames,
+
+        [Int]
+        $RetryCount = 20,
+
+        [Int]
+        $RetryIntervalSec = 30
     )
 
     Import-DscResource -ModuleName xComputerManagement
