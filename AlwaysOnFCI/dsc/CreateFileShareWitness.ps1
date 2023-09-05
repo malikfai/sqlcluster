@@ -1,5 +1,5 @@
 #
-# Copyright="© Microsoft Corporation. All rights reserved."
+# Copyright="ï¿½ Microsoft Corporation. All rights reserved."
 #
 
 configuration CreateFileShareWitness
@@ -7,67 +7,63 @@ configuration CreateFileShareWitness
     param
     (
         [Parameter(Mandatory)]
-        [String]$DomainName,
+        [String]
+        $DomainName,
 
         [Parameter(Mandatory)]
-        [System.Management.Automation.PSCredential]$Admincreds,
+        [System.Management.Automation.PSCredential]
+        $DomainAdminCredential,
 
         [Parameter(Mandatory)]
-        [String]$SharePath,
-
-        [Int]$RetryCount=20,
-        [Int]$RetryIntervalSec=30
+        [String]
+        $SharePath
     )
 
-    Import-DscResource -ModuleName xComputerManagement, xSmbShare, cDisk,xDisk,xActiveDirectory
+    Import-DscResource -ModuleName ComputerManagementDsc
+    Import-DscResource -ModuleName StorageDsc
     
     Node localhost
     {
-        xWaitforDisk Disk2
-        {
-             DiskNumber = 2
-             RetryIntervalSec =$RetryIntervalSec
-             RetryCount = $RetryCount
+        LocalConfigurationManager {
+            RebootNodeIfNeeded = $true
         }
 
-        cDiskNoRestart DataDisk
-        {
-            DiskNumber = 2
+        WaitforDisk Disk2 {
+            DiskId = "2"
+            RetryIntervalSec = 20
+            RetryCount = 30
+        }
+
+        Disk DataDisk {
+            DiskId = "2"
             DriveLetter = "F"
+            DependsOn = "[WaitForDisk]Disk2"
         }
 
-        WindowsFeature ADPS
-        {
+        WindowsFeature ADPS {
             Name = "RSAT-AD-PowerShell"
             Ensure = "Present"
         } 
 
-        xComputer DomainJoin
-        {
+        Computer DomainJoin {
             Name = $env:COMPUTERNAME
             DomainName = $DomainName
-            Credential = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
+            Credential = $DomainAdminCredential
         }
 
-        File FSWFolder
-        {
+        File FSWFolder {
             DestinationPath = "F:\$($SharePath.ToUpperInvariant())"
             Type = "Directory"
             Ensure = "Present"
-            DependsOn = "[xComputer]DomainJoin"
+            DependsOn = "[Computer]DomainJoin"
         }
 
-        xSmbShare FSWShare
-        {
+        SmbShare FSWShare {
             Name = $SharePath.ToUpperInvariant()
             Path = "F:\$($SharePath.ToUpperInvariant())"
             FullAccess = "BUILTIN\Administrators"
             Ensure = "Present"
             DependsOn = "[File]FSWFolder"
-        }
-        LocalConfigurationManager 
-        {
-            RebootNodeIfNeeded = $True
         }
     }     
 }

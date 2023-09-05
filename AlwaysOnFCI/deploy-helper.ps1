@@ -5,12 +5,9 @@ $resourceGroupName = "sqlcluster"
 $namePrefix = "fm-fci"
 $existingDomainName = "contoso.local"
 $adminUsername = "fmadmin"
-$adminPassword = "!Welcome2023"
-##Read-Host -MaskInput -Prompt "Enter SQL Service Acct Password"
-##Read-Host -AsSecureString -Prompt "Enter Admin Password"
+$adminPassword = "!Welcome2023" #Read-Host -MaskInput -Prompt "Enter Domain Admin Password"
 $sqlServerServiceAccountUserName = "sqlservice"
-$sqlServerServiceAccountPassword = "!Welcome2023"
-##Read-Host -MaskInput -Prompt "Enter SQL Service Acct Password"
+$sqlServerServiceAccountPassword = "!Welcome2023" #Read-Host -MaskInput -Prompt "Enter SQL Service Acct Password"
 $existingSqlSubnetName = "sqlSubnet"
 $existingVirtualNetworkName = "autohav2VNEThef"
 $existingAdPDCVMName = "ad-primary-dc"
@@ -20,7 +17,7 @@ $windowsImageOffer = "SQL2014SP2-WS2012R2"
 $windowsImageSKU = "Enterprise"
 $windowsImageVersion = "latest"
 $sqlDiskSize = 1024
-$_artifactsLocation = "https://raw.githubusercontent.com/malikfai/sqlcluster/main/AlwaysOnAG/"
+$_artifactsLocation = "https://raw.githubusercontent.com/malikfai/sqlcluster/main/AlwaysOnFCI/"
 
 $templateParameterObject = @{
     "namePrefix" = $namePrefix

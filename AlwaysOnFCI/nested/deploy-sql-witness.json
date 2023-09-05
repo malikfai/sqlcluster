@@ -31,7 +31,7 @@
     }
   },
   "variables": {
-    "fswModulesURL": "[uri(parameters('_artifactsLocation'), concat('dsc/create-file-share-witness.ps1.zip',parameters('_artifactsLocationSasToken')))]",
+    "fswModulesURL": "[uri(parameters('_artifactsLocation'), concat('dsc/CreateFileShareWitness.ps1.zip',parameters('_artifactsLocationSasToken')))]",
     "fswConfigurationFunction": "CreateFileShareWitness.ps1\\CreateFileShareWitness"
   },
   "resources": [
@@ -50,12 +50,12 @@
           "modulesUrl": "[variables('fswModulesURL')]",
           "configurationFunction": "[variables('fswConfigurationFunction')]",
           "properties": {
-            "domainName": "[parameters('domainName')]",
-            "sharePath": "[parameters('sharePath')]",
-            "adminCreds": {
-              "userName": "[parameters('adminUsername')]",
+            "DomainName": "[parameters('domainName')]",
+            "DomainAdminCredential": {
+              "userName": "[parameters('domainName')]\\[parameters('adminUsername')]",
               "password": "PrivateSettingsRef:adminPassword"
-            }
+            },
+            "SharePath": "[parameters('sharePath')]"
           }
         },
         "protectedSettings": {
