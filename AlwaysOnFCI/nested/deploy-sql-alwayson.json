@@ -2,49 +2,31 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "sqlNamePrefix": {
+    "namePrefix": {
       "type": "string"
     },
     "domainName": {
       "type": "string"
     },
-    "namePrefix": {
+    "domainAdminUsername": {
       "type": "string"
     },
-    "sharePath": {
+    "domainAdminPassword": {
+      "type": "securestring"
+    },
+    "sqlNamePrefix": {
       "type": "string"
+    },
+    "sqlServiceUsername": {
+      "type": "string"
+    },
+    "sqlServicePassword": {
+      "type": "securestring"
     },
     "sqlWitnessVMName": {
       "type": "string"
     },
-    "sqlLBName": {
-      "type": "string"
-    },
-    "sqlLBIPAddress": {
-      "type": "string"
-    },
-    "dnsServerName": {
-      "type": "string"
-    },
-    "sqlServerServiceAccountUserName": {
-      "type": "string"
-    },
-    "sqlServerServiceAccountPassword": {
-      "type": "securestring"
-    },
-    "adminUsername": {
-      "type": "string"
-    },
-    "adminPassword": {
-      "type": "securestring"
-    },
-    "sqlAlwaysOnEndpointName": {
-      "type": "string"
-    },
-    "sqlAlwaysOnAvailabilityGroupName1": {
-      "type": "string"
-    },
-    "sqlAlwaysOnAvailabilityGroupListenerName1": {
+    "sharePath": {
       "type": "string"
     },
     "_artifactsLocation": {
@@ -83,22 +65,21 @@
           "modulesUrl": "[variables('sqlAOPrepareModulesURL')]",
           "configurationFunction": "[variables('sqlAOPrepareConfigurationFunction')]",
           "properties": {
-            "domainName": "[parameters('domainName')]",
-            "sqlAlwaysOnEndpointName": "[parameters('sqlAlwaysOnEndpointName')]",
-            "adminCreds": {
-              "userName": "[parameters('adminUsername')]",
-              "password": "PrivateSettingsRef:adminPassword"
+            "DomainName": "[parameters('domainName')]",
+            "DomainAdminCredential": {
+              "UserName": "[parameters('domainAdminUsername')]",
+              "Password": "PrivateSettingsRef:domainAdminPassword"
             },
-            "sqlServiceCreds": {
-              "userName": "[parameters('sqlServerServiceAccountUserName')]",
-              "password": "PrivateSettingsRef:sqlServerServiceAccountPassword"
+            "SqlServiceCredential": {
+              "UserName": "[parameters('sqlServiceUsername')]",
+              "Password": "PrivateSettingsRef:sqlServicePassword"
             }
           }
         },
         "protectedSettings": {
           "items": {
-            "adminPassword": "[parameters('adminPassword')]",
-            "sqlServerServiceAccountPassword": "[parameters('sqlServerServiceAccountPassword')]"
+            "domainAdminPassword": "[parameters('domainAdminPassword')]",
+            "sqlServicePassword": "[parameters('sqlServicePassword')]"
           }
         }
       }
@@ -121,36 +102,23 @@
           "modulesUrl": "[variables('createClusterModulesURL')]",
           "configurationFunction": "[variables('createClusterConfigurationFunction')]",
           "properties": {
-            "domainName": "[parameters('domainName')]",
-            "clusterName": "[variables('clusterName')]",
-            "sharePath": "[concat('\\\\',parameters('sqlWitnessVMName'),'\\',parameters('sharePath'))]",
-            "nodes": [
-              "[concat(parameters('sqlNamePrefix'),'0')]",
-              "[concat(parameters('sqlNamePrefix'),'1')]"
-            ],
-            "sqlAlwaysOnEndpointName": "[parameters('sqlAlwaysOnEndpointName')]",
-            "sqlAlwaysOnAvailabilityGroupName": "[parameters('sqlAlwaysOnAvailabilityGroupName1')]",
-            "sqlAlwaysOnAvailabilityGroupListenerName": "[parameters('sqlAlwaysOnAvailabilityGroupListenerName1')]",
-            "sqlAlwaysOnAvailabilityGroupListenerPort": 1433,
-            "lbName": "[parameters('sqlLBName')]",
-            "lbAddress": "[parameters('sqlLBIPAddress')]",
-            "primaryReplica": "[concat(parameters('sqlNamePrefix'),'1')]",
-            "secondaryReplica": "[concat(parameters('sqlNamePrefix'),'0')]",
-            "dnsServerName": "[parameters('dnsServerName')]",
-            "adminCreds": {
-              "userName": "[parameters('adminUsername')]",
-              "password": "PrivateSettingsRef:adminPassword"
+            "DomainName": "[parameters('domainName')]",
+            "DomainAdminCredential" {
+              "UserName": "[parameters('domainAdminUsername')]",
+              "Password": "PrivateSettingsRef:domainAdminPassword"
             },
-            "sqlServiceCreds": {
-              "userName": "[parameters('sqlServerServiceAccountUserName')]",
-              "password": "PrivateSettingsRef:sqlServerServiceAccountPassword"
-            }
+            "SqlServiceCredential": {
+              "UserName": "[parameters('sqlServiceUsername')]",
+              "Password": "PrivateSettingsRef:sqlServicePassword"
+            },
+            "ClusterName": "[variables('clusterName')]",
+            "SharePath": "[concat('\\\\',parameters('sqlWitnessVMName'),'\\',parameters('sharePath'))]"
           }
         },
         "protectedSettings": {
           "items": {
-            "adminPassword": "[parameters('adminPassword')]",
-            "sqlServerServiceAccountPassword": "[parameters('sqlServerServiceAccountPassword')]"
+            "domainAdminPassword": "[parameters('domainAdminPassword')]",
+            "sqlServicePassword": "[parameters('sqlServicePassword')]"
           }
         }
       }

@@ -11,16 +11,16 @@
     "dnsServerName": {
       "type": "string"
     },
-    "adminUsername": {
+    "domainAdminUsername": {
       "type": "string"
     },
-    "adminPassword": {
+    "domainAdminPassword": {
       "type": "securestring"
     },
-    "sqlServerServiceAccountUserName": {
+    "sqlServiceUsername": {
       "type": "string"
     },
-    "sqlServerServiceAccountPassword": {
+    "sqlServicePassword": {
       "type": "securestring"
     },
     "diskType": {
@@ -98,9 +98,7 @@
     "sqlWitnessVMName": "[concat(variables('sqlNamePrefix'),'w')]",
     "deploySqlAlwaysOn": "deploySqlAlwaysOn",
     "deploySqlAlwaysOnTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/deploy-sql-alwayson.json',parameters('_artifactsLocationSasToken')))]",
-    "sqlAOEPName": "[concat(parameters('namePrefix'),'-agep')]",
-    "sqlAOAGName1": "[concat(parameters('namePrefix'),'-ag1')]",
-    "sqlAOListener1": "[concat(parameters('namePrefix'),'-agl1')]"
+    "sqlLoadBalancerRule": "[concat(parameters('namePrefix'),'-sql')]"
   },
   "resources": [
     {
@@ -141,7 +139,7 @@
         ],
         "loadBalancingRules": [
           {
-            "name": "[variables('sqlAOListener1')]",
+            "name": "[variables('sqlLoadBalancerRule')]",
             "properties": {
               "frontendIPConfiguration": {
                 "id": "[variables('sqlLBFEConfigID1')]"
@@ -244,8 +242,8 @@
         },
         "osProfile": {
           "computerName": "[concat(variables('sqlNamePrefix'), copyindex())]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminUsername": "[parameters('domainAdminUsername')]",
+          "adminPassword": "[parameters('domainAdminPassword')]"
         },
         "storageProfile": {
           "imageReference": {
@@ -312,8 +310,8 @@
         },
         "osProfile": {
           "computerName": "[variables('sqlWitnessVMName')]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminUsername": "[parameters('domainAdminUsername')]",
+          "adminPassword": "[parameters('domainAdminPassword')]"
         },
         "storageProfile": {
           "imageReference": {
@@ -366,20 +364,20 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "sqlWitnessVMName": {
-            "value": "[variables('sqlWitnessVMName')]"
-          },
           "domainName": {
             "value": "[parameters('domainName')]"
           },
+          "domainAdminUsername": {
+            "value": "[parameters('domainAdminUsername')]"
+          },
+          "domainAdminPassword": {
+            "value": "[parameters('domainAdminPassword')]"
+          },
+          "sqlWitnessVMName": {
+            "value": "[variables('sqlWitnessVMName')]"
+          },
           "sharePath": {
             "value": "[variables('sqlWitnessSharePath')]"
-          },
-          "adminUsername": {
-            "value": "[parameters('adminUsername')]"
-          },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
@@ -409,56 +407,38 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "sqlNamePrefix": {
-            "value": "[variables('sqlNamePrefix')]"
+          "namePrefix": {
+            "value": "[parameters('namePrefix')]"
           },
           "domainName": {
             "value": "[parameters('domainName')]"
           },
-          "namePrefix": {
-            "value": "[parameters('namePrefix')]"
+          "domainAdminUsername": {
+            "value": "[parameters('domainAdminUsername')]"
           },
-          "sharePath": {
-            "value": "[variables('sqlWitnessSharePath')]"
+          "domainAdminPassword": {
+            "value": "[parameters('domainAdminPassword')]"
+          },
+          "sqlNamePrefix": {
+            "value": "[variables('sqlNamePrefix')]"
+          },
+          "sqlServiceUsername": {
+            "value": "[parameters('sqlServiceUsername')]"
+          },
+          "sqlServicePassword": {
+            "value": "[parameters('sqlServicePassword')]"
           },
           "sqlWitnessVMName": {
             "value": "[variables('sqlWitnessVMName')]"
           },
-          "sqlLBName": {
-            "value": "[variables('sqlLBName')]"
-          },
-          "sqlLBIPAddress": {
-            "value": "[parameters('sqlLBIPAddress')]"
-          },
-          "dnsServerName": {
-            "value": "[parameters('dnsServerName')]"
-          },
-          "sqlServerServiceAccountUserName": {
-            "value": "[parameters('sqlServerServiceAccountUserName')]"
-          },
-          "sqlServerServiceAccountPassword": {
-            "value": "[parameters('sqlServerServiceAccountPassword')]"
-          },
-          "adminUsername": {
-            "value": "[parameters('adminUsername')]"
-          },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
+          "sharePath": {
+            "value": "[variables('sqlWitnessSharePath')]"
           },
           "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
           },
           "_artifactsLocationSasToken": {
             "value": "[parameters('_artifactsLocationSasToken')]"
-          },
-          "sqlAlwaysOnEndpointName": {
-            "value": "[variables('sqlAOEPName')]"
-          },
-          "sqlAlwaysOnAvailabilityGroupName1": {
-            "value": "[variables('sqlAOAGName1')]"
-          },
-          "sqlAlwaysOnAvailabilityGroupListenerName1": {
-            "value": "[variables('sqlAOListener1')]"
           },
           "location": {
             "value": "[parameters('location')]"

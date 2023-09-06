@@ -2,20 +2,20 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "sqlWitnessVMName": {
+    "domainName": {
       "type": "string"
     },
-    "domainName": {
+    "domainAdminUsername": {
+      "type": "string"
+    },
+    "domainAdminPassword": {
+      "type": "securestring"
+    },
+    "sqlWitnessVMName": {
       "type": "string"
     },
     "sharePath": {
       "type": "string"
-    },
-    "adminUsername": {
-      "type": "string"
-    },
-    "adminPassword": {
-      "type": "securestring"
     },
     "_artifactsLocation": {
       "type": "string"
@@ -52,15 +52,15 @@
           "properties": {
             "DomainName": "[parameters('domainName')]",
             "DomainAdminCredential": {
-              "userName": "[parameters('adminUsername')]",
-              "password": "PrivateSettingsRef:adminPassword"
+              "UserName": "[parameters('domainAdminUsername')]",
+              "Password": "PrivateSettingsRef:domainAdminPassword"
             },
             "SharePath": "[parameters('sharePath')]"
           }
         },
         "protectedSettings": {
           "items": {
-            "adminPassword": "[parameters('adminPassword')]"
+            "domainAdminPassword": "[parameters('domainAdminPassword')]"
           }
         }
       }
