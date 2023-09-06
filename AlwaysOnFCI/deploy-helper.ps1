@@ -22,6 +22,8 @@ $_artifactsLocation = "https://raw.githubusercontent.com/malikfai/sqlcluster/mai
 
 $templateParameterObject = @{
     "namePrefix" = $namePrefix
+    "localAdminUsername" = $localAdminUsername
+    "localAdminPassword" = $localAdminPassword
     "domainName" = $domainName
     "domainAdminUsername" = $domainAdminUsername
     "domainAdminPassword" = $domainAdminPassword
