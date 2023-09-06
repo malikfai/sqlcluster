@@ -8,9 +8,6 @@
     "domainName": {
       "type": "string"
     },
-    "dnsServerName": {
-      "type": "string"
-    },
     "domainAdminUsername": {
       "type": "string"
     },
@@ -51,12 +48,6 @@
     "sqlWitnessVMSize": {
       "type": "string"
     },
-    "_artifactsLocation": {
-      "type": "string"
-    },
-    "_artifactsLocationSasToken": {
-      "type": "securestring"
-    },
     "windowsImagePublisher": {
       "type": "string",
       "defaultValue": "MicrosoftSQLServer"
@@ -78,6 +69,12 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "_artifactsLocation": {
+      "type": "string"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring"
     }
   },
   "variables": {

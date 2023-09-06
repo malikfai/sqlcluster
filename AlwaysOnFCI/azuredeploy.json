@@ -44,25 +44,25 @@
         "description": "DNS domain name for existing Active Directory domain"
       }
     },
-    "adminUsername": {
+    "domainAdminUsername": {
       "type": "string",
       "metadata": {
         "description": "Name of the Administrator of the existing Active Directory Domain"
       }
     },
-    "adminPassword": {
+    "domainAdminPassword": {
       "type": "securestring",
       "metadata": {
         "description": "Password for the Administrator account of the existing Active Directory Domain"
       }
     },
-    "sqlServerServiceAccountUserName": {
+    "sqlServiceUsername": {
       "type": "string",
       "metadata": {
         "description": "The SQL Server Service account name"
       }
     },
-    "sqlServerServiceAccountPassword": {
+    "sqlServicePassword": {
       "type": "securestring",
       "metadata": {
         "description": "The SQL Server Service account password"
@@ -149,35 +149,26 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "location": {
-            "value": "[parameters('location')]"
-          },
           "namePrefix": {
             "value": "[parameters('namePrefix')]"
           },
           "domainName": {
             "value": "[parameters('existingDomainName')]"
           },
+          "domainAdminUsername": {
+            "value": "[parameters('domainAdminUsername')]"
+          },
+          "domainAdminPassword": {
+            "value": "[parameters('domainAdminPassword')]"
+          },
+          "sqlServiceUsername": {
+            "value": "[parameters('sqlServiceUsername')]"
+          },
+          "sqlServicePassword": {
+            "value": "[parameters('sqlServicePassword')]"
+          },
           "diskType": {
             "value": "[parameters('diskType')]"
-          },
-          "sqlDiskSize": {
-            "value": "[parameters('sqlDiskSize')]"
-          },
-          "dnsServerName": {
-            "value": "[parameters('existingAdPDCVMName')]"
-          },
-          "adminUsername": {
-            "value": "[parameters('adminUsername')]"
-          },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
-          },
-          "sqlServerServiceAccountUserName": {
-            "value": "[parameters('sqlServerServiceAccountUserName')]"
-          },
-          "sqlServerServiceAccountPassword": {
-            "value": "[parameters('sqlServerServiceAccountPassword')]"
           },
           "nicSubnetUri": {
             "value": "[variables('sqlSubnetRef')]"
@@ -191,14 +182,11 @@
           "sqlVMSize": {
             "value": "[parameters('sqlVMSize')]"
           },
+          "sqlDiskSize": {
+            "value": "[parameters('sqlDiskSize')]"
+          },
           "sqlWitnessVMSize": {
             "value": "[parameters('sqlWitnessVMSize')]"
-          },
-          "_artifactsLocation": {
-            "value": "[parameters('_artifactsLocation')]"
-          },
-          "_artifactsLocationSasToken": {
-            "value": "[parameters('_artifactsLocationSasToken')]"
           },
           "windowsImagePublisher": {
             "value": "[parameters('windowsImagePublisher')]"
@@ -211,6 +199,15 @@
           },
           "windowsImageVersion": {
             "value": "[parameters('windowsImageVersion')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
           }
         }
       }
