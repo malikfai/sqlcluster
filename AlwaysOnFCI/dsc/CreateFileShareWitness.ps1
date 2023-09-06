@@ -22,7 +22,6 @@ configuration CreateFileShareWitness
         $SharePath
     )
 
-    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion "6.0.1"
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion "8.5.0"
     Import-DscResource -ModuleName StorageDsc -ModuleVersion "5.0.1"
 
@@ -46,19 +45,7 @@ configuration CreateFileShareWitness
             DriveLetter = "F"
         }
 
-        WindowsFeature RSAT-AD-PowerShell {
-            Name = "RSAT-AD-PowerShell"
-            Ensure = "Present"
-        } 
-
-        WaitForADDomain WaitForDomain { 
-            DependsOn = "[WindowsFeature]RSAT-AD-PowerShell"
-            DomainName = $DomainName 
-            Credential = $DomainCreds
-        }
-
         Computer DomainJoin {
-            DependsOn = "[WaitForADDomain]WaitForDomain"
             Name = $env:COMPUTERNAME
             DomainName = $DomainName
             Credential = $DomainCreds
