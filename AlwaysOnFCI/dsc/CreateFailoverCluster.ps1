@@ -137,21 +137,21 @@ configuration CreateFailoverCluster
             LocalPort = "59999"
         }
 
-        SqlLogin AddDomainAdminSqlLogin {
-            DependsOn = "[WindowsFeature]RSAT-AD-PowerShell"
-            Ensure = "Present"
-            Name = $DomainCreds.UserName
-            LoginType = "WindowsUser"
-            InstanceName = "MSSQLSERVER"
-        }
-
         ADUser CreateSqlServerServiceAccount {
-            DependsOn = "[SqlRole]AddDomainAdminSqlLoginToSysadminServerRole"
+            DependsOn = "[Computer]DomainJoin"
             Ensure = "Present"
             DomainName = $DomainName
             UserName = $SqlServiceCredential.UserName
             Password = $SqlServiceCredential
             PsDscRunAsCredential = $DomainCreds
+        }
+
+        SqlLogin AddDomainAdminSqlLogin {
+            DependsOn = "[ADUser]CreateSqlServerServiceAccount"
+            Ensure = "Present"
+            Name = $DomainCreds.UserName
+            LoginType = "WindowsUser"
+            InstanceName = "MSSQLSERVER"
         }
 
         SqlLogin AddSqlServerServiceLogin {
@@ -162,7 +162,7 @@ configuration CreateFailoverCluster
         }
         
         SqlRole AddSysadminMembers {
-            DependsOn = "[SqlLogin]AddSqlServerServiceLogin"
+            DependsOn = "[SqlLogin]AddDomainAdminSqlLogin", "[SqlLogin]AddSqlServerServiceLogin"
             Ensure = "Present"
             ServerRoleName = "sysadmin"
             InstanceName = "MSSQLSERVER"

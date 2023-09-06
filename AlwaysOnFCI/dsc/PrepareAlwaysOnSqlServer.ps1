@@ -121,16 +121,8 @@ configuration PrepareAlwaysOnSqlServer
             LocalPort = "59999"
         }
 
-        SqlLogin AddDomainAdminSqlLogin {
-            DependsOn = "[WindowsFeature]RSAT-AD-PowerShell"
-            Ensure = "Present"
-            Name = $DomainCreds.UserName
-            LoginType = "WindowsUser"
-            InstanceName = "MSSQLSERVER"
-        }
-
         ADUser CreateSqlServerServiceAccount {
-            DependsOn = "[SqlRole]AddDomainAdminSqlLoginToSysadminServerRole"
+            DependsOn = "[Computer]DomainJoin"
             Ensure = "Present"
             DomainName = $DomainName
             UserName = $SqlServiceCredential.UserName
@@ -138,7 +130,15 @@ configuration PrepareAlwaysOnSqlServer
             PsDscRunAsCredential = $DomainCreds
         }
 
-        SqlLogin AddSqlServerServiceLogin {
+        SqlLogin AddDomainAdminSqlLogin {
+            DependsOn = "[ADUser]CreateSqlServerServiceAccount"
+            Ensure = "Present"
+            Name = $DomainCreds.UserName
+            LoginType = "WindowsUser"
+            InstanceName = "MSSQLSERVER"
+        }
+
+        SqlLogin AddSqlServerServiceSqlLogin {
             DependsOn = "[ADUser]CreateSqlServerServiceAccount"
             Name = $SQLCreds.UserName
             LoginType = "WindowsUser"
@@ -146,7 +146,7 @@ configuration PrepareAlwaysOnSqlServer
         }
         
         SqlRole AddSysadminMembers {
-            DependsOn = "[SqlLogin]AddSqlServerServiceLogin"
+            DependsOn = "[SqlLogin]AddDomainAdminSqlLogin", "[SqlLogin]AddSqlServerServiceSqlLogin"
             Ensure = "Present"
             ServerRoleName = "sysadmin"
             InstanceName = "MSSQLSERVER"
