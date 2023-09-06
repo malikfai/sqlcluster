@@ -26,13 +26,13 @@ configuration PrepareAlwaysOnSqlServer
         [Int]$RetryIntervalSec=30
     )
 
-    Import-DscResource -ModuleName ComputerManagement
-    Import-DscResource -ModuleName ActiveDirectory
+    Import-DscResource -ModuleName ComputerManagementDsc
+    Import-DscResource -ModuleName ActiveDirectoryDsc
     Import-DscResource -ModuleName StorageDsc
     #Import-DscResource -ModuleName xSql
     Import-DscResource -ModuleName SQLServerDsc
     #Import-DscResource -ModuleName xSQLps
-    Import-DscResource -ModuleName Networking
+    Import-DscResource -ModuleName NetworkingDsc
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential]$DomainFQDNCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential]$SQLCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SQLServicecreds.UserName)", $SQLServicecreds.Password)
@@ -43,7 +43,7 @@ configuration PrepareAlwaysOnSqlServer
     {
         WaitforDisk Disk2
         {
-             DiskNumber = 2
+            DiskId = "2"
              RetryIntervalSec =20
              RetryCount = 30
         }
@@ -56,7 +56,7 @@ configuration PrepareAlwaysOnSqlServer
 
         xWaitforDisk Disk3
         {
-             DiskNumber = 3
+            DiskId = "3"
              RetryIntervalSec =20
              RetryCount = 30
         }
