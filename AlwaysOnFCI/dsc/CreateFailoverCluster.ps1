@@ -83,13 +83,13 @@ configuration CreateFailoverCluster
         $RetryIntervalSec = 30
     )
 
-    Import-DscResource -ModuleName ComputerManagement
-    Import-DscResource -ModuleName FailOverCluster
+    Import-DscResource -ModuleName ComputerManagementDsc
+    Import-DscResource -ModuleName FailOverClusterDsc
     Import-DscResource -ModuleName StorageDsc
-    Import-DscResource -ModuleName ActiveDirectory
+    Import-DscResource -ModuleName ActiveDirectoryDsc
     #Import-DscResource -ModuleName xDisk
     #Import-DscResource -ModuleName xSqlPs
-    Import-DscResource -ModuleName Networking
+    Import-DscResource -ModuleName NetworkingDsc
     #Import-DscResource -ModuleName xSql
     Import-DscResource -ModuleName SQLServerDsc
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
@@ -106,7 +106,7 @@ configuration CreateFailoverCluster
 
         WaitforDisk Disk2
         {
-             DiskNumber = 2
+            DiskId = "2"
              RetryIntervalSec =20
              RetryCount = 30
         }
@@ -119,7 +119,7 @@ configuration CreateFailoverCluster
 
         WaitforDisk Disk3
         {
-             DiskNumber = 3
+            DiskId = "3"
              RetryIntervalSec =20
              RetryCount = 30
         }
@@ -158,9 +158,7 @@ configuration CreateFailoverCluster
         WaitForADDomain DscForestWait 
         { 
             DomainName = $DomainName 
-            DomainUserCredential= $DomainCreds
-            RetryCount = $RetryCount 
-            RetryIntervalSec = $RetryIntervalSec 
+            Credential= $DomainCreds
 	        DependsOn = "[WindowsFeature]ADPS"
         }
         
@@ -178,9 +176,6 @@ configuration CreateFailoverCluster
             Name = "SQL-Server-Database-Engine-TCP-In"
             DisplayName = "SQL Server Database Engine (TCP-In)"
             Description = "Inbound rule for SQL Server to allow TCP traffic for the Database Engine."
-            DisplayGroup = "SQL Server"
-            State = "Enabled"
-            Access = "Allow"
             Protocol = "TCP"
             LocalPort = $DatabaseEnginePort -as [String]
             Ensure = "Present"
@@ -192,9 +187,6 @@ configuration CreateFailoverCluster
             Name = "SQL-Server-Database-Mirroring-TCP-In"
             DisplayName = "SQL Server Database Mirroring (TCP-In)"
             Description = "Inbound rule for SQL Server to allow TCP traffic for the Database Mirroring."
-            DisplayGroup = "SQL Server"
-            State = "Enabled"
-            Access = "Allow"
             Protocol = "TCP"
             LocalPort = "5022"
             Ensure = "Present"
@@ -206,9 +198,6 @@ configuration CreateFailoverCluster
             Name = "SQL-Server-Availability-Group-Listener-TCP-In"
             DisplayName = "SQL Server Availability Group Listener (TCP-In)"
             Description = "Inbound rule for SQL Server to allow TCP traffic for the Availability Group listener."
-            DisplayGroup = "SQL Server"
-            State = "Enabled"
-            Access = "Allow"
             Protocol = "TCP"
             LocalPort = "59999"
             Ensure = "Present"
@@ -218,14 +207,14 @@ configuration CreateFailoverCluster
         {
             Name = $DomainCreds.UserName
             LoginType = "WindowsUser"
-            ServerRoles = "sysadmin"
-            Enabled = $true
-            Credential = $Admincreds
+            InstanceName = "MSSQLSERVER"
+            ServerRoleName = "sysadmin"
+            PsDscRunAsCredential = $Admincreds
         }
 
         ADUser CreateSqlServerServiceAccount
         {
-            DomainAdministratorCredential = $DomainCreds
+            PsDscRunAsCredential = $DomainCreds
             DomainName = $DomainName
             UserName = $SQLServicecreds.UserName
             Password = $SQLServicecreds
@@ -237,17 +226,19 @@ configuration CreateFailoverCluster
         {
             Name = $SQLCreds.UserName
             LoginType = "WindowsUser"
-            ServerRoles = "sysadmin"
-            Enabled = $true
-            Credential = $Admincreds
+            InstanceName = "MSSQLSERVER"
+            ServerRoleName = "sysadmin"
+            PsDscRunAsCredential = $Admincreds
             DependsOn = "[ADUser]CreateSqlServerServiceAccount"
         }
         
         SqlEndpoint AddSqlServerEndpoint
         {
+            EndpointName = $SqlAlwaysOnEndpointName
+            EndpointType = "DatabaseMirroring"
             InstanceName = "MSSQLSERVER"
             Port = $DatabaseEnginePort
-            SqlAdministratorCredential = $Admincreds
+            PsDscRunAsCredential = $Admincreds
             DependsOn = "[SqlLogin]AddSqlServerServiceAccountToSysadminServerRole"
         }
 
@@ -260,7 +251,7 @@ configuration CreateFailoverCluster
         {
             Name = $ClusterName
             DomainAdministratorCredential = $DomainCreds
-            Nodes = $Nodes
+            StaticIPAddress = "10.0.1.0/26"
         }
 
         WaitForFileShareWitness WaitForFSW
@@ -272,21 +263,18 @@ configuration CreateFailoverCluster
 
         ClusterQuorum FailoverClusterQuorum
         {
-            Name = $ClusterName
-            SharePath = $SharePath
-            DomainAdministratorCredential = $DomainCreds
+            IsSingleInstance = "Yes"
+            Type = "NodeAndFileShareMajority"
+            Resource = $SharePath
+            PsDscRunAsCredential = $DomainCredsc;
         }
 
-        SqlServer ConfigureSqlServerWithAlwaysOn
+        SqlAlwaysOnService ConfigureSqlServerWithAlwaysOn
         {
+            Ensure = "Present"
             InstanceName = $env:COMPUTERNAME
-            SqlAdministratorCredential = $Admincreds
-            ServiceCredential = $SQLCreds
-            Hadr = "Enabled"
-            MaxDegreeOfParallelism = 1
-            FilePath = "F:\DATA"
-            LogPath = "G:\LOG"
-            DomainAdministratorCredential = $DomainFQDNCreds
+            PsDscRunAsCredential  = $DomainFQDNCreds
+            RestartTimeout       = 120
             DependsOn = "[Cluster]FailoverCluster"
         }
 
@@ -302,36 +290,38 @@ configuration CreateFailoverCluster
 
         SqlEndpoint SqlAlwaysOnEndpoint
         {
+            EndpointName = $SqlAlwaysOnEndpointName
+            EndpointType = "DatabaseMirroring"
             InstanceName = $env:COMPUTERNAME
-            Name = $SqlAlwaysOnEndpointName
-            PortNumber = 5022
-            AllowedUser = $SQLServiceCreds.UserName
-            SqlAdministratorCredential = $SQLCreds
+            Port = 5022
+            Owner = $SQLServiceCreds.UserName
+            PsDscRunAsCredential  = $SQLCreds
             DependsOn = "[SqlServer]ConfigureSqlServerWithAlwaysOn"
         }
 
-        SqlServer ConfigureSqlServerSecondaryWithAlwaysOn
+        SqlAlwaysOnService ConfigureSqlServerSecondaryWithAlwaysOn
         {
             InstanceName = $SecondaryReplica
-            SqlAdministratorCredential = $Admincreds
-            Hadr = "Enabled"
-            DomainAdministratorCredential = $DomainFQDNCreds
+            PsDscRunAsCredential  = $DomainFQDNCreds
+            RestartTimeout       = 120
             DependsOn = "[Cluster]FailoverCluster"
         }
 
         SqlEndpoint SqlSecondaryAlwaysOnEndpoint
         {
             InstanceName = $SecondaryReplica
-            Name = $SqlAlwaysOnEndpointName
-            PortNumber = 5022
-            AllowedUser = $SQLServiceCreds.UserName
-            SqlAdministratorCredential = $SQLCreds
+            EndpointName = $SqlAlwaysOnEndpointName
+            EndpointType = "DatabaseMirroring"
+            Port = 5022
+            Owner = $SQLServiceCreds.UserName
+            PsDscRunAsCredential = $SQLCreds
 	    DependsOn="[SqlServer]ConfigureSqlServerSecondaryWithAlwaysOn"
         }
         
         SqlAvailabilityGroup SqlAG
         {
             Name = $SqlAlwaysOnAvailabilityGroupName
+            EndpointType = "DatabaseMirroring"
             ClusterName = $ClusterName
             InstanceName = $env:COMPUTERNAME
             PortNumber = 5022
