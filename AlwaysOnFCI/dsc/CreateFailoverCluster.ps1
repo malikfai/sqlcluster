@@ -104,19 +104,6 @@ configuration CreateFailoverCluster
             Name = "RSAT-AD-PowerShell"
         }
 
-        WaitForADDomain WaitForDomain { 
-            DependsOn = "[WindowsFeature]RSAT-AD-PowerShell"
-            DomainName = $DomainName 
-            Credential = $DomainCreds
-        }
-        
-        Computer DomainJoin {
-            DependsOn = "[WaitForADDomain]WaitForDomain"
-            Name = $env:COMPUTERNAME
-            DomainName = $DomainName
-            Credential = $DomainCreds
-        }
-
         Firewall DatabaseEngineFirewallRule {
             Ensure = "Present"
             Name = "SQL-Server-Database-Engine-TCP-In"
@@ -135,6 +122,12 @@ configuration CreateFailoverCluster
             Protocol = "TCP"
             Direction = "Inbound"
             LocalPort = "59999"
+        }
+        
+        Computer DomainJoin {
+            Name = $env:COMPUTERNAME
+            DomainName = $DomainName
+            Credential = $DomainCreds
         }
 
         ADUser CreateSqlServerServiceAccount {

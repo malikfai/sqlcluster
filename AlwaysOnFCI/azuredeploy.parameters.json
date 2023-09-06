@@ -5,29 +5,59 @@
     "namePrefix": {
       "value": "GEN-UNIQUE-8"
     },
-    "existingDomainName": {
-      "value": "GET-PREREQ-domainName"
+    "localAdminUsername": {
+      "value": "local-admin"
     },
-    "adminUsername": {
-      "value": "GET-PREREQ-adUsername"
-    },
-    "adminPassword": {
+    "localAdminPassword": {
       "reference": "GEN-KEYVAULT-PASSWORD-REFERENCE"
     },
-    "sqlServerServiceAccountUserName": {
+    "domainName": {
+      "value": "GET-PREREQ-domainName"
+    },
+    "domainAdminUsername": {
+      "value": "GET-PREREQ-adUsername"
+    },
+    "domainAdminPassword": {
+      "reference": "GEN-KEYVAULT-PASSWORD-REFERENCE"
+    },
+    "sqlServiceUserName": {
       "value": "sqlservice"
     },
-    "sqlServerServiceAccountPassword": {
+    "sqlServicePassword": {
       "value": "GEN-PASSWORD"
     },
-    "existingVirtualNetworkName": {
-      "value": "GET-PREREQ-virtualNetworkName"
+    "diskType": {
+      "value": "Premium_LRS"
     },
     "existingSqlSubnetName": {
       "value": "GET-PREREQ-subnetName"
     },
-    "existingAdPDCVMName": {
-      "value": "GET-PREREQ-virtualMachineName"
+    "existingVirtualNetworkName": {
+      "value": "GET-PREREQ-virtualNetworkName"
+    },
+    "sqlLBIPAddress": {
+      "value": "10.0.0.9"
+    },
+    "sqlVMSize": {
+      "value": "Standard_D4s_v3"
+    },
+    "sqlDiskSize": {
+      "value": 1024
+    },
+    "sqlWitnessVMSize": {
+      "value": "Standard_D2s_v3"
+    },
+    "windowsImagePublisher": {
+      "value": "MicrosoftSQLServer"
+    },
+    "windowsImageOffer": {
+      "value": "SQL2014SP2-WS2012R2"
+    },
+    "windowsImageSKU": {
+      "value": "Enterprise"
+    },
+    "windowsImageVersion": {
+      "value": "latest"
     }
   }
 }

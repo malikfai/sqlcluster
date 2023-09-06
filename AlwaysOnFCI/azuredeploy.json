@@ -9,12 +9,6 @@
         "description": "Naming prefix for each new resource created. 8-char max, lowercase alphanumeric"
       }
     },
-    "domainName": {
-      "type": "string",
-      "metadata": {
-        "description": "DNS domain name for existing Active Directory domain"
-      }
-    },
     "localAdminUsername": {
       "type": "string",
       "metadata": {
@@ -25,6 +19,12 @@
       "type": "securestring",
       "metadata": {
         "description": "Password for the local VM Administrator"
+      }
+    },
+    "domainName": {
+      "type": "string",
+      "metadata": {
+        "description": "DNS domain name for existing Active Directory domain"
       }
     },
     "domainAdminUsername": {

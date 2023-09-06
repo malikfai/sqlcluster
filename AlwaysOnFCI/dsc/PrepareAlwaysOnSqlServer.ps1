@@ -55,9 +55,9 @@ configuration PrepareAlwaysOnSqlServer
         }
 
         Disk DataDisk {
+            DependsOn = "[WaitForDisk]Disk2"
             DiskId = "2"
             DriveLetter = "F"
-            DependsOn = "[WaitForDisk]Disk2"
         }
 
         WaitforDisk Disk3
@@ -68,37 +68,24 @@ configuration PrepareAlwaysOnSqlServer
         }
 
         Disk LogDisk {
+            DependsOn = "[WaitForDisk]Disk3"
             DiskId = "3"
             DriveLetter = "G"
-            DependsOn = "[WaitForDisk]Disk3"
         }
 
         WindowsFeature Failover-Clustering {
-            Name = "Failover-Clustering"
             Ensure = "Present"
+            Name = "Failover-Clustering"
         }
 
         WindowsFeature RSAT-Clustering-PowerShell {
-            Name = "RSAT-Clustering-PowerShell"
             Ensure = "Present"
+            Name = "RSAT-Clustering-PowerShell"
         }
 
         WindowsFeature RSAT-AD-PowerShell {
-            Name = "RSAT-AD-PowerShell"
             Ensure = "Present"
-        }
-        
-        WaitForADDomain WaitForDomain { 
-            DependsOn = "[WindowsFeature]RSAT-AD-PowerShell"
-            DomainName = $DomainName 
-            Credential = $DomainCreds
-        }
-
-        Computer DomainJoin {
-            DependsOn = "[WaitForADDomain]WaitForDomain"
-            Name = $env:COMPUTERNAME
-            DomainName = $DomainName
-            Credential = $DomainCreds
+            Name = "RSAT-AD-PowerShell"
         }
 
         Firewall DatabaseEngineFirewallRule {
@@ -119,6 +106,12 @@ configuration PrepareAlwaysOnSqlServer
             Protocol = "TCP"
             Direction = "Inbound"
             LocalPort = "59999"
+        }
+
+        Computer DomainJoin {
+            Name = $env:COMPUTERNAME
+            DomainName = $DomainName
+            Credential = $DomainCreds
         }
 
         ADUser CreateSqlServerServiceAccount {
