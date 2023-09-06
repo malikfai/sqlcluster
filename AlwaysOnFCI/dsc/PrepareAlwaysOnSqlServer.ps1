@@ -127,7 +127,6 @@ configuration PrepareAlwaysOnSqlServer
             Name = $DomainCreds.UserName
             LoginType = "WindowsUser"
             InstanceName = "MSSQLSERVER"
-            PsDscRunAsCredential = $DomainAdminCredential
         }
 
         SqlRole AddDomainAdminSqlLoginToSysadminServerRole {
@@ -152,7 +151,6 @@ configuration PrepareAlwaysOnSqlServer
             Name = $SQLCreds.UserName
             LoginType = "WindowsUser"
             InstanceName = "MSSQLSERVER"
-            PsDscRunAsCredential = $DomainAdminCredential
         }
         
         SqlRole AddDomainAdminSqlLoginToSysadminServerRole {

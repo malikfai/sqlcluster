@@ -10,6 +10,9 @@ configuration CreateFileShareWitness
         [String]
         $DomainName,
 
+        [String]
+        $DomainNetbiosName = (Get-NetBIOSName -DomainName $DomainName),
+
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]
         $DomainAdminCredential,
@@ -21,7 +24,9 @@ configuration CreateFileShareWitness
 
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion "8.5.0"
     Import-DscResource -ModuleName StorageDsc -ModuleVersion "5.0.1"
-    
+
+    [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCredential.UserName)", $DomainAdminCredential.Password)
+
     Node localhost
     {
         LocalConfigurationManager {
@@ -45,10 +50,17 @@ configuration CreateFileShareWitness
             Ensure = "Present"
         } 
 
+        WaitForADDomain WaitForDomain { 
+            DependsOn = "[WindowsFeature]RSAT-AD-PowerShell"
+            DomainName = $DomainName 
+            Credential = $DomainCreds
+        }
+
         Computer DomainJoin {
+            DependsOn = "[WaitForADDomain]WaitForDomain"
             Name = $env:COMPUTERNAME
             DomainName = $DomainName
-            Credential = $DomainAdminCredential
+            Credential = $DomainCreds
         }
 
         File FSWFolder {
@@ -66,4 +78,27 @@ configuration CreateFileShareWitness
             FullAccess = "BUILTIN\Administrators"
         }
     }     
+}
+
+function Get-NetBIOSName { 
+    [OutputType([string])]
+    param(
+        [string]$DomainName
+    )
+
+    if ($DomainName.Contains('.')) {
+        $length = $DomainName.IndexOf('.')
+        if ( $length -ge 16) {
+            $length = 15
+        }
+        return $DomainName.Substring(0, $length)
+    }
+    else {
+        if ($DomainName.Length -gt 15) {
+            return $DomainName.Substring(0, 15)
+        }
+        else {
+            return $DomainName
+        }
+    }
 }
