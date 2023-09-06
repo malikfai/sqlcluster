@@ -19,8 +19,8 @@ configuration CreateFileShareWitness
         $SharePath
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc
-    Import-DscResource -ModuleName StorageDsc
+    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion "8.5.0"
+    Import-DscResource -ModuleName StorageDsc -ModuleVersion "5.0.1"
     
     Node localhost
     {
@@ -35,12 +35,12 @@ configuration CreateFileShareWitness
         }
 
         Disk DataDisk {
+            DependsOn = "[WaitForDisk]Disk2"
             DiskId = "2"
             DriveLetter = "F"
-            DependsOn = "[WaitForDisk]Disk2"
         }
 
-        WindowsFeature ADPS {
+        WindowsFeature RSAT-AD-PowerShell {
             Name = "RSAT-AD-PowerShell"
             Ensure = "Present"
         } 
@@ -52,18 +52,18 @@ configuration CreateFileShareWitness
         }
 
         File FSWFolder {
-            DestinationPath = "F:\$($SharePath.ToUpperInvariant())"
-            Type = "Directory"
-            Ensure = "Present"
             DependsOn = "[Computer]DomainJoin"
+            Ensure = "Present"
+            Type = "Directory"
+            DestinationPath = "F:\$($SharePath.ToUpperInvariant())"
         }
 
         SmbShare FSWShare {
+            DependsOn = "[File]FSWFolder"
+            Ensure = "Present"
             Name = $SharePath.ToUpperInvariant()
             Path = "F:\$($SharePath.ToUpperInvariant())"
             FullAccess = "BUILTIN\Administrators"
-            Ensure = "Present"
-            DependsOn = "[File]FSWFolder"
         }
     }     
 }
