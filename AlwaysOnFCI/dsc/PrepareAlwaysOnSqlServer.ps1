@@ -67,7 +67,7 @@ configuration PrepareAlwaysOnSqlServer
             RetryCount = $RetryCount
         }
 
-        Disk DataDisk {
+        Disk LogDisk {
             DiskId = "3"
             DriveLetter = "G"
             DependsOn = "[WaitForDisk]Disk3"
@@ -130,7 +130,7 @@ configuration PrepareAlwaysOnSqlServer
         }
 
         SqlRole AddDomainAdminSqlLoginToSysadminServerRole {
-            DependsOn = "[SqlLogin]AddDomainAdminAccountToSysadminServerRole"
+            DependsOn = "[SqlLogin]AddDomainAdminSqlLogin"
             Ensure = "Present"
             ServerRoleName = "sysadmin"
             InstanceName = "MSSQLSERVER"
@@ -146,15 +146,15 @@ configuration PrepareAlwaysOnSqlServer
             PsDscRunAsCredential = $DomainCreds
         }
 
-        SqlLogin AddSqlServerServiceAccountToSysadminServerRole {
+        SqlLogin AddSqlServerServiceLogin {
             DependsOn = "[ADUser]CreateSqlServerServiceAccount"
             Name = $SQLCreds.UserName
             LoginType = "WindowsUser"
             InstanceName = "MSSQLSERVER"
         }
         
-        SqlRole AddDomainAdminSqlLoginToSysadminServerRole {
-            DependsOn = "[SqlLogin]AddSqlServerServiceAccountToSysadminServerRole"
+        SqlRole AddSqlServiceLoginToSysadminServerRole {
+            DependsOn = "[SqlLogin]AddSqlServerServiceLogin"
             Ensure = "Present"
             ServerRoleName = "sysadmin"
             InstanceName = "MSSQLSERVER"
