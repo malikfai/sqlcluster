@@ -31,11 +31,11 @@ configuration PrepareAlwaysOnSqlServer
         $RetryIntervalSec = 30
     )
 
-    Import-DscResource -ModuleName ActiveDirectoryDsc
-    Import-DscResource -ModuleName ComputerManagementDsc
-    Import-DscResource -ModuleName NetworkingDsc
-    Import-DscResource -ModuleName SqlServerDsc
-    Import-DscResource -ModuleName StorageDsc
+    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion "6.0.1"
+    Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion "8.5.0"
+    Import-DscResource -ModuleName NetworkingDsc -ModuleVersion "8.2.0"
+    Import-DscResource -ModuleName SqlServerDsc -ModuleVersion "16.0.0"
+    Import-DscResource -ModuleName StorageDsc -ModuleVersion "5.0.1"
 
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCredential.UserName)", $DomainAdminCredential.Password)
     [System.Management.Automation.PSCredential]$SQLCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SqlServiceCredential.UserName)", $SqlServiceCredential.Password)
@@ -120,7 +120,6 @@ configuration PrepareAlwaysOnSqlServer
             DomainName = $DomainName
             UserName = $SqlServiceCredential.UserName
             Password = $SqlServiceCredential
-            PsDscRunAsCredential = $DomainCreds
         }
 
         SqlLogin AddDomainAdminSqlLogin {

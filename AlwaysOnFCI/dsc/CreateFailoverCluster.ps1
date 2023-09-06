@@ -136,7 +136,6 @@ configuration CreateFailoverCluster
             DomainName = $DomainName
             UserName = $SqlServiceCredential.UserName
             Password = $SqlServiceCredential
-            PsDscRunAsCredential = $DomainCreds
         }
 
         SqlLogin AddDomainAdminSqlLogin {
