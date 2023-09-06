@@ -5,6 +5,12 @@
     "namePrefix": {
       "type": "string"
     },
+    "localAdminUsername": {
+      "type": "string"
+    },
+    "localAdminPassword": {
+      "type": "securestring"
+    },
     "domainName": {
       "type": "string"
     },
@@ -239,8 +245,8 @@
         },
         "osProfile": {
           "computerName": "[concat(variables('sqlNamePrefix'), copyindex())]",
-          "adminUsername": "[parameters('domainAdminUsername')]",
-          "adminPassword": "[parameters('domainAdminPassword')]"
+          "adminUsername": "[parameters('localAdminUsername')]",
+          "adminPassword": "[parameters('localAdminPassword')]"
         },
         "storageProfile": {
           "imageReference": {
@@ -307,8 +313,8 @@
         },
         "osProfile": {
           "computerName": "[variables('sqlWitnessVMName')]",
-          "adminUsername": "[parameters('domainAdminUsername')]",
-          "adminPassword": "[parameters('domainAdminPassword')]"
+          "adminUsername": "[parameters('localAdminUsername')]",
+          "adminPassword": "[parameters('localAdminPassword')]"
         },
         "storageProfile": {
           "imageReference": {

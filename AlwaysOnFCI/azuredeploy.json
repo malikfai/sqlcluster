@@ -15,6 +15,18 @@
         "description": "DNS domain name for existing Active Directory domain"
       }
     },
+    "localAdminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the local VM Administrator"
+      }
+    },
+    "localAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the local VM Administrator"
+      }
+    },
     "domainAdminUsername": {
       "type": "string",
       "metadata": {
@@ -144,6 +156,12 @@
         "parameters": {
           "namePrefix": {
             "value": "[parameters('namePrefix')]"
+          },
+          "localAdminUsername": {
+            "value": "[parameters('localAdminUsername')]"
+          },
+          "localAdminPassword": {
+            "value": "[parameters('localAdminPassword')]"
           },
           "domainName": {
             "value": "[parameters('domainName')]"
