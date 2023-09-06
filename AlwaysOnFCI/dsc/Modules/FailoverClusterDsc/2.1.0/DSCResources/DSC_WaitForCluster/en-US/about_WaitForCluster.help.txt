@@ -1,0 +1,81 @@
+.NAME
+    WaitForCluster
+
+.DESCRIPTION
+    Ensures that a node waits for a remote cluster is created.
+
+    ## Requirements
+
+    * Target machine must be running Windows Server 2008 R2 or later.
+
+.PARAMETER Name
+    Key - String
+    Name of the cluster to wait for.
+
+.PARAMETER RetryIntervalSec
+    Write - UInt64
+    Interval to check for cluster existence. Default values is 10 (seconds).
+
+.PARAMETER RetryCount
+    Write - UInt32
+    Maximum number of retries to check for cluster existence. Default value is 50 (retries).
+
+.EXAMPLE 1
+
+This example shows how to wait for the failover cluster to be present.
+For example if the failover cluster was created on the first node and the
+second node at the same time, then second node must wait for the first
+node to create the cluster. Otherwise both nodes might try to create the
+same cluster.
+
+Configuration WaitForCluster_WaitForFailoverClusterToBePresentConfig
+{
+    param
+    (
+        [Parameter(Mandatory = $true)]
+        [PSCredential]
+        $ActiveDirectoryAdministratorCredential
+    )
+
+    Import-DscResource -ModuleName FailoverClusterDsc
+
+    Node localhost
+    {
+        WindowsFeature AddFailoverFeature
+        {
+            Ensure = 'Present'
+            Name   = 'Failover-clustering'
+        }
+
+        WindowsFeature AddRemoteServerAdministrationToolsClusteringPowerShellFeature
+        {
+            Ensure    = 'Present'
+            Name      = 'RSAT-Clustering-PowerShell'
+            DependsOn = '[WindowsFeature]AddFailoverFeature'
+        }
+
+        WindowsFeature AddRemoteServerAdministrationToolsClusteringCmdInterfaceFeature
+        {
+            Ensure    = 'Present'
+            Name      = 'RSAT-Clustering-CmdInterface'
+            DependsOn = '[WindowsFeature]AddRemoteServerAdministrationToolsClusteringPowerShellFeature'
+        }
+
+        WaitForCluster WaitForCluster
+        {
+            Name             = 'Cluster01'
+            RetryIntervalSec = 10
+            RetryCount       = 60
+            DependsOn        = '[WindowsFeature]AddRemoteServerAdministrationToolsClusteringCmdInterfaceFeature'
+        }
+
+        Cluster JoinSecondNodeToCluster
+        {
+            Name                          = 'Cluster01'
+            StaticIPAddress               = '192.168.100.20/24'
+            DomainAdministratorCredential = $ActiveDirectoryAdministratorCredential
+            DependsOn                     = '[WaitForCluster]WaitForCluster'
+        }
+    }
+}
+

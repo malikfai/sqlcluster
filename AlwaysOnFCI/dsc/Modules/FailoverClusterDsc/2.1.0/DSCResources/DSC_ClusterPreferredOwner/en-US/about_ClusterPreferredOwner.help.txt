@@ -1,0 +1,105 @@
+.NAME
+    ClusterPreferredOwner
+
+.DESCRIPTION
+    Configures preferred owners of a cluster group and cluster resources in a failover
+    cluster.
+
+    ## Requirements
+
+    * Target machine must be running Windows Server 2008 R2 or later.
+
+.PARAMETER ClusterGroup
+    Key - String
+    Name of the cluster group.
+
+.PARAMETER ClusterName
+    Key - String
+    Name of the cluster.
+
+.PARAMETER Nodes
+    Required - StringArray
+    The nodes to set as owners.
+
+.PARAMETER ClusterResources
+    Write - StringArray
+    The resources to set preferred owners on.
+
+.PARAMETER Ensure
+    Write - String
+    Allowed values: Present, Absent
+    If the preferred owners should be present or absent. Default value is 'Present'.
+
+.EXAMPLE 1
+
+This example shows how to add two preferred owners to a failover cluster
+group and cluster resources in the failover cluster.
+
+.NOTES
+This example assumes the failover cluster is already present.
+
+Configuration ClusterPreferredOwner_AddPreferredOwnerConfig
+{
+    Import-DscResource -ModuleName FailoverClusterDsc
+
+    Node localhost
+    {
+        ClusterPreferredOwner 'AddOwnersForClusterGroup1'
+        {
+            Ensure           = 'Present'
+            ClusterName      = 'TESTCLU1'
+            ClusterGroup     = 'Cluster Group 1'
+            Nodes            = @('Node1', 'Node2')
+            ClusterResources = @('Resource1', 'Resource2')
+        }
+
+        ClusterPreferredOwner 'AddOwnersForClusterGroup2'
+        {
+            Ensure           = 'Present'
+            ClusterName      = 'TESTCLU1'
+            ClusterGroup     = 'Cluster Group 2'
+            Nodes            = @('Node1', 'Node2')
+            ClusterResources = @('Resource3', 'Resource4')
+        }
+    }
+}
+
+.EXAMPLE 2
+
+This example shows how to remove two preferred owners from a failover cluster
+group and cluster resources in the failover cluster. This will leave any
+preferred owners not specified in the configuration.
+
+.NOTES
+If there are three preferred owners; Node1, Node2, Node3. This examples will
+still leave Node3 as a preferred owner.
+
+This example assumes the failover cluster is already present, and the cluster
+groups and cluster resources are present.
+
+Configuration ClusterPreferredOwner_RemovePreferredOwnerConfig
+{
+    Import-DscResource -ModuleName FailoverClusterDsc
+
+    Node localhost
+    {
+        ClusterPreferredOwner 'RemoveOwnersForClusterGroup1'
+        {
+            Ensure           = 'Absent'
+            ClusterName      = 'TESTCLU1'
+            ClusterGroup     = 'Cluster Group 1'
+            Nodes            = @('Node1', 'Node2')
+            ClusterResources = @('Resource1', 'Resource2')
+        }
+
+        ClusterPreferredOwner 'RemoveOwnersForClusterGroup2'
+        {
+            Ensure           = 'Absent'
+            ClusterName      = 'TESTCLU1'
+            ClusterGroup     = 'Cluster Group 2'
+            Nodes            = @('Node1', 'Node2')
+            ClusterResources = @('Resource3', 'Resource4')
+        }
+    }
+}
+
