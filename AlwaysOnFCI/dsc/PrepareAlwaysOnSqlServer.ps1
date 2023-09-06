@@ -26,7 +26,13 @@ configuration PrepareAlwaysOnSqlServer
         [Int]$RetryIntervalSec=30
     )
 
-    Import-DscResource -ModuleName xComputerManagement,CDisk,xActiveDirectory,XDisk,xSql, xSQLServer, xSQLps,xNetworking
+    Import-DscResource -ModuleName ComputerManagement
+    Import-DscResource -ModuleName ActiveDirectory
+    Import-DscResource -ModuleName StorageDsc
+    #Import-DscResource -ModuleName xSql
+    Import-DscResource -ModuleName SQLServerDsc
+    #Import-DscResource -ModuleName xSQLps
+    Import-DscResource -ModuleName Networking
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential]$DomainFQDNCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential]$SQLCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SQLServicecreds.UserName)", $SQLServicecreds.Password)
@@ -35,30 +41,30 @@ configuration PrepareAlwaysOnSqlServer
 
     Node localhost
     {
-        xWaitforDisk Disk2
+        WaitforDisk Disk2
         {
              DiskNumber = 2
-             RetryIntervalSec =$RetryIntervalSec
-             RetryCount = $RetryCount
+             RetryIntervalSec =20
+             RetryCount = 30
         }
 
-        cDiskNoRestart DataDisk
-        {
-            DiskNumber = 2
+        Disk DataDisk {
+            DiskId = "2"
             DriveLetter = "F"
+            DependsOn = "[WaitForDisk]Disk2"
         }
 
         xWaitforDisk Disk3
         {
              DiskNumber = 3
-             RetryIntervalSec =$RetryIntervalSec
-             RetryCount = $RetryCount
+             RetryIntervalSec =20
+             RetryCount = 30
         }
 
-        cDiskNoRestart LogDisk
-        {
-            DiskNumber = 3
+        Disk DataDisk {
+            DiskId = "3"
             DriveLetter = "G"
+            DependsOn = "[WaitForDisk]Disk3"
         }
 
         WindowsFeature FC
@@ -79,7 +85,7 @@ configuration PrepareAlwaysOnSqlServer
             Ensure = "Present"
         }
 
-        xWaitForADDomain DscForestWait 
+        WaitForADDomain DscForestWait 
         { 
             DomainName = $DomainName 
             DomainUserCredential= $DomainCreds
@@ -87,14 +93,14 @@ configuration PrepareAlwaysOnSqlServer
             RetryIntervalSec = $RetryIntervalSec 
         }
 
-        xComputer DomainJoin
+        Computer DomainJoin
         {
             Name = $env:COMPUTERNAME
             DomainName = $DomainName
             Credential = $DomainCreds
         }
 
-        xFirewall DatabaseEngineFirewallRule1
+        Firewall DatabaseEngineFirewallRule1
         {
             Direction = "Inbound"
             Name = "SQL-Server-Database-Engine-TCP-In-1"
@@ -108,7 +114,7 @@ configuration PrepareAlwaysOnSqlServer
             Ensure = "Present"
         }
 
-        xFirewall DatabaseMirroringFirewallRule
+        Firewall DatabaseMirroringFirewallRule
         {
             Direction = "Inbound"
             Name = "SQL-Server-Database-Mirroring-TCP-In"
@@ -122,7 +128,7 @@ configuration PrepareAlwaysOnSqlServer
             Ensure = "Present"
         }
 
-        xFirewall ListenerFirewallRule1
+        Firewall ListenerFirewallRule1
         {
             Direction = "Inbound"
             Name = "SQL-Server-Availability-Group-Listener-TCP-In-1"
@@ -136,7 +142,7 @@ configuration PrepareAlwaysOnSqlServer
             Ensure = "Present"
         }
 
-        xSqlLogin AddDomainAdminAccountToSysadminServerRole
+        SqlLogin AddDomainAdminAccountToSysadminServerRole
         {
             Name = $DomainCreds.UserName
             LoginType = "WindowsUser"
@@ -145,27 +151,27 @@ configuration PrepareAlwaysOnSqlServer
             Credential = $Admincreds
         }
 
-        xADUser CreateSqlServerServiceAccount
+        ADUser CreateSqlServerServiceAccount
         {
             DomainAdministratorCredential = $DomainCreds
             DomainName = $DomainName
             UserName = $SQLServicecreds.UserName
             Password = $SQLServicecreds
             Ensure = "Present"
-            DependsOn = "[xSqlLogin]AddDomainAdminAccountToSysadminServerRole"
+            DependsOn = "[SqlLogin]AddDomainAdminAccountToSysadminServerRole"
         }
 
-        xSqlLogin AddSqlServerServiceAccountToSysadminServerRole
+        SqlLogin AddSqlServerServiceAccountToSysadminServerRole
         {
             Name = $SQLCreds.UserName
             LoginType = "WindowsUser"
             ServerRoles = "sysadmin"
             Enabled = $true
             Credential = $Admincreds
-            DependsOn = "[xADUser]CreateSqlServerServiceAccount"
+            DependsOn = "[ADUser]CreateSqlServerServiceAccount"
         }
 
-        xSqlServer ConfigureSqlServerWithAlwaysOn
+        SqlServer ConfigureSqlServerWithAlwaysOn
         {
             InstanceName = $env:COMPUTERNAME
             SqlAdministratorCredential = $Admincreds
@@ -174,7 +180,7 @@ configuration PrepareAlwaysOnSqlServer
             FilePath = "F:\DATA"
             LogPath = "G:\LOG"
             DomainAdministratorCredential = $DomainFQDNCreds
-            DependsOn = "[xSqlLogin]AddSqlServerServiceAccountToSysadminServerRole"
+            DependsOn = "[SqlLogin]AddSqlServerServiceAccountToSysadminServerRole"
         }
 
         LocalConfigurationManager 

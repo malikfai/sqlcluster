@@ -83,15 +83,15 @@ configuration CreateFailoverCluster
         $RetryIntervalSec = 30
     )
 
-    Import-DscResource -ModuleName xComputerManagement
-    Import-DscResource -ModuleName xFailOverCluster
-    Import-DscResource -ModuleName cDisk
-    Import-DscResource -ModuleName xActiveDirectory
-    Import-DscResource -ModuleName xDisk
-    Import-DscResource -ModuleName xSqlPs
-    Import-DscResource -ModuleName xNetworking
-    Import-DscResource -ModuleName xSql
-    Import-DscResource -ModuleName xSQLServer
+    Import-DscResource -ModuleName ComputerManagement
+    Import-DscResource -ModuleName FailOverCluster
+    Import-DscResource -ModuleName StorageDsc
+    Import-DscResource -ModuleName ActiveDirectory
+    #Import-DscResource -ModuleName xDisk
+    #Import-DscResource -ModuleName xSqlPs
+    Import-DscResource -ModuleName Networking
+    #Import-DscResource -ModuleName xSql
+    Import-DscResource -ModuleName SQLServerDsc
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential]$DomainFQDNCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential]$SQLCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SQLServiceCreds.UserName)", $SQLServiceCreds.Password)
@@ -104,30 +104,30 @@ configuration CreateFailoverCluster
     Node localhost
     {
 
-        xWaitforDisk Disk2
+        WaitforDisk Disk2
         {
              DiskNumber = 2
-             RetryIntervalSec =$RetryIntervalSec
-             RetryCount = $RetryCount
+             RetryIntervalSec =20
+             RetryCount = 30
         }
 
-        cDiskNoRestart DataDisk
-        {
-            DiskNumber = 2
+        Disk DataDisk {
+            DiskId = "2"
             DriveLetter = "F"
+            DependsOn = "[WaitForDisk]Disk2"
         }
 
-        xWaitforDisk Disk3
+        WaitforDisk Disk3
         {
              DiskNumber = 3
-             RetryIntervalSec =$RetryIntervalSec
-             RetryCount = $RetryCount
+             RetryIntervalSec =20
+             RetryCount = 30
         }
 
-        cDiskNoRestart LogDisk
-        {
-            DiskNumber = 3
+        Disk DataDisk {
+            DiskId = "3"
             DriveLetter = "G"
+            DependsOn = "[WaitForDisk]Disk3"
         }
 
         WindowsFeature FC
@@ -155,7 +155,7 @@ configuration CreateFailoverCluster
             Ensure = "Present"
         }
 
-        xWaitForADDomain DscForestWait 
+        WaitForADDomain DscForestWait 
         { 
             DomainName = $DomainName 
             DomainUserCredential= $DomainCreds
@@ -164,15 +164,15 @@ configuration CreateFailoverCluster
 	        DependsOn = "[WindowsFeature]ADPS"
         }
         
-        xComputer DomainJoin
+        Computer DomainJoin
         {
             Name = $env:COMPUTERNAME
             DomainName = $DomainName
             Credential = $DomainCreds
-	        DependsOn = "[xWaitForADDomain]DscForestWait"
+	        DependsOn = "[WaitForADDomain]DscForestWait"
         }
 
-        xFirewall DatabaseEngineFirewallRule
+        Firewall DatabaseEngineFirewallRule
         {
             Direction = "Inbound"
             Name = "SQL-Server-Database-Engine-TCP-In"
@@ -186,7 +186,7 @@ configuration CreateFailoverCluster
             Ensure = "Present"
         }
 
-        xFirewall DatabaseMirroringFirewallRule
+        Firewall DatabaseMirroringFirewallRule
         {
             Direction = "Inbound"
             Name = "SQL-Server-Database-Mirroring-TCP-In"
@@ -200,7 +200,7 @@ configuration CreateFailoverCluster
             Ensure = "Present"
         }
 
-        xFirewall ListenerFirewallRule
+        Firewall ListenerFirewallRule
         {
             Direction = "Inbound"
             Name = "SQL-Server-Availability-Group-Listener-TCP-In"
@@ -214,7 +214,7 @@ configuration CreateFailoverCluster
             Ensure = "Present"
         }
 
-        xSqlLogin AddDomainAdminAccountToSysadminServerRole
+        SqlLogin AddDomainAdminAccountToSysadminServerRole
         {
             Name = $DomainCreds.UserName
             LoginType = "WindowsUser"
@@ -223,32 +223,32 @@ configuration CreateFailoverCluster
             Credential = $Admincreds
         }
 
-        xADUser CreateSqlServerServiceAccount
+        ADUser CreateSqlServerServiceAccount
         {
             DomainAdministratorCredential = $DomainCreds
             DomainName = $DomainName
             UserName = $SQLServicecreds.UserName
             Password = $SQLServicecreds
             Ensure = "Present"
-            DependsOn = "[xSqlLogin]AddDomainAdminAccountToSysadminServerRole"
+            DependsOn = "[SqlLogin]AddDomainAdminAccountToSysadminServerRole"
         }
 
-        xSqlLogin AddSqlServerServiceAccountToSysadminServerRole
+        SqlLogin AddSqlServerServiceAccountToSysadminServerRole
         {
             Name = $SQLCreds.UserName
             LoginType = "WindowsUser"
             ServerRoles = "sysadmin"
             Enabled = $true
             Credential = $Admincreds
-            DependsOn = "[xADUser]CreateSqlServerServiceAccount"
+            DependsOn = "[ADUser]CreateSqlServerServiceAccount"
         }
         
-        xSqlTsqlEndpoint AddSqlServerEndpoint
+        SqlEndpoint AddSqlServerEndpoint
         {
             InstanceName = "MSSQLSERVER"
-            PortNumber = $DatabaseEnginePort
+            Port = $DatabaseEnginePort
             SqlAdministratorCredential = $Admincreds
-            DependsOn = "[xSqlLogin]AddSqlServerServiceAccountToSysadminServerRole"
+            DependsOn = "[SqlLogin]AddSqlServerServiceAccountToSysadminServerRole"
         }
 
         LocalConfigurationManager 
@@ -256,28 +256,28 @@ configuration CreateFailoverCluster
             RebootNodeIfNeeded = $true
         }
 
-        xCluster FailoverCluster
+        Cluster FailoverCluster
         {
             Name = $ClusterName
             DomainAdministratorCredential = $DomainCreds
             Nodes = $Nodes
         }
 
-        xWaitForFileShareWitness WaitForFSW
+        WaitForFileShareWitness WaitForFSW
         {
             SharePath = $SharePath
             DomainAdministratorCredential = $DomainCreds
 
         }
 
-        xClusterQuorum FailoverClusterQuorum
+        ClusterQuorum FailoverClusterQuorum
         {
             Name = $ClusterName
             SharePath = $SharePath
             DomainAdministratorCredential = $DomainCreds
         }
 
-        xSqlServer ConfigureSqlServerWithAlwaysOn
+        SqlServer ConfigureSqlServerWithAlwaysOn
         {
             InstanceName = $env:COMPUTERNAME
             SqlAdministratorCredential = $Admincreds
@@ -287,49 +287,49 @@ configuration CreateFailoverCluster
             FilePath = "F:\DATA"
             LogPath = "G:\LOG"
             DomainAdministratorCredential = $DomainFQDNCreds
-            DependsOn = "[xCluster]FailoverCluster"
+            DependsOn = "[Cluster]FailoverCluster"
         }
 
-        xSQLAddListenerIPToDNS AddLoadBalancer
+        SQLAddListenerIPToDNS AddLoadBalancer
         {
             LBName = $LBName
             Credential = $DomainCreds
             LBAddress = $LBAddress
             DNSServerName = $DNSServerName
             DomainName = $DomainName
-            DependsOn = "[xSqlServer]ConfigureSqlServerWithAlwaysOn"
+            DependsOn = "[SqlServer]ConfigureSqlServerWithAlwaysOn"
         }
 
-        xSqlEndpoint SqlAlwaysOnEndpoint
+        SqlEndpoint SqlAlwaysOnEndpoint
         {
             InstanceName = $env:COMPUTERNAME
             Name = $SqlAlwaysOnEndpointName
             PortNumber = 5022
             AllowedUser = $SQLServiceCreds.UserName
             SqlAdministratorCredential = $SQLCreds
-            DependsOn = "[xSqlServer]ConfigureSqlServerWithAlwaysOn"
+            DependsOn = "[SqlServer]ConfigureSqlServerWithAlwaysOn"
         }
 
-        xSqlServer ConfigureSqlServerSecondaryWithAlwaysOn
+        SqlServer ConfigureSqlServerSecondaryWithAlwaysOn
         {
             InstanceName = $SecondaryReplica
             SqlAdministratorCredential = $Admincreds
             Hadr = "Enabled"
             DomainAdministratorCredential = $DomainFQDNCreds
-            DependsOn = "[xCluster]FailoverCluster"
+            DependsOn = "[Cluster]FailoverCluster"
         }
 
-        xSqlEndpoint SqlSecondaryAlwaysOnEndpoint
+        SqlEndpoint SqlSecondaryAlwaysOnEndpoint
         {
             InstanceName = $SecondaryReplica
             Name = $SqlAlwaysOnEndpointName
             PortNumber = 5022
             AllowedUser = $SQLServiceCreds.UserName
             SqlAdministratorCredential = $SQLCreds
-	    DependsOn="[xSqlServer]ConfigureSqlServerSecondaryWithAlwaysOn"
+	    DependsOn="[SqlServer]ConfigureSqlServerSecondaryWithAlwaysOn"
         }
         
-        xSqlAvailabilityGroup SqlAG
+        SqlAvailabilityGroup SqlAG
         {
             Name = $SqlAlwaysOnAvailabilityGroupName
             ClusterName = $ClusterName
@@ -337,10 +337,10 @@ configuration CreateFailoverCluster
             PortNumber = 5022
             DomainCredential =$DomainCreds
             SqlAdministratorCredential = $Admincreds
-	        DependsOn="[xSqlEndpoint]SqlSecondaryAlwaysOnEndpoint"
+	        DependsOn="[SqlEndpoint]SqlSecondaryAlwaysOnEndpoint"
         }
            
-        xSqlAvailabilityGroupListener SqlAGListener
+        SqlAvailabilityGroupListener SqlAGListener
         {
             Name = $SqlAlwaysOnAvailabilityGroupListenerName
             AvailabilityGroupName = $SqlAlwaysOnAvailabilityGroupName
@@ -351,7 +351,7 @@ configuration CreateFailoverCluster
             InstanceName = $env:COMPUTERNAME
             DomainCredential = $DomainCreds
             SqlAdministratorCredential = $Admincreds
-            DependsOn = "[xSqlAvailabilityGroup]SqlAG"
+            DependsOn = "[SqlAvailabilityGroup]SqlAG"
         }
 
         LocalConfigurationManager 
