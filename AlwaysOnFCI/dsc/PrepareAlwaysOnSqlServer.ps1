@@ -7,45 +7,51 @@ configuration PrepareAlwaysOnSqlServer
     param
     (
         [Parameter(Mandatory)]
-        [String]$DomainName,
-
-        [Parameter(Mandatory)]
-        [System.Management.Automation.PSCredential]$Admincreds,
-
-        [Parameter(Mandatory)]
-        [System.Management.Automation.PSCredential]$SQLServicecreds,
-
-        [Parameter(Mandatory)]
-        [String]$SqlAlwaysOnEndpointName,
-
-        [UInt32]$DatabaseEnginePort1 = 1433,
+        [String]
+        $DomainName,
         
-        [String]$DomainNetbiosName=(Get-NetBIOSName -DomainName $DomainName),
+        [String]
+        $DomainNetbiosName = (Get-NetBIOSName -DomainName $DomainName),
 
-        [Int]$RetryCount=20,
-        [Int]$RetryIntervalSec=30
+        [Parameter(Mandatory)]
+        [System.Management.Automation.PSCredential]
+        $DomainAdminCredential,
+
+        [Parameter(Mandatory)]
+        [System.Management.Automation.PSCredential]
+        $SqlServiceCredential,
+
+        [UInt32]
+        $DatabaseEnginePort = 1433,
+
+        [Int]
+        $RetryCount = 20,
+
+        [Int]
+        $RetryIntervalSec = 30
     )
 
-    Import-DscResource -ModuleName ComputerManagementDsc
     Import-DscResource -ModuleName ActiveDirectoryDsc
-    Import-DscResource -ModuleName StorageDsc
-    #Import-DscResource -ModuleName xSql
-    Import-DscResource -ModuleName SQLServerDsc
-    #Import-DscResource -ModuleName xSQLps
+    Import-DscResource -ModuleName ComputerManagementDsc
     Import-DscResource -ModuleName NetworkingDsc
-    [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
-    [System.Management.Automation.PSCredential]$DomainFQDNCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
-    [System.Management.Automation.PSCredential]$SQLCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SQLServicecreds.UserName)", $SQLServicecreds.Password)
+    Import-DscResource -ModuleName SqlServerDsc
+    Import-DscResource -ModuleName StorageDsc
+
+    [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCredential.UserName)", $DomainAdminCredential.Password)
+    [System.Management.Automation.PSCredential]$SQLCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SqlServiceCredential.UserName)", $SqlServiceCredential.Password)
 
     WaitForSqlSetup
 
     Node localhost
     {
-        WaitforDisk Disk2
-        {
+        LocalConfigurationManager {
+            RebootNodeIfNeeded = $True
+        }
+
+        WaitforDisk Disk2 {
             DiskId = "2"
-             RetryIntervalSec =20
-             RetryCount = 30
+            RetryIntervalSec = $RetryIntervalSec
+            RetryCount = $RetryCount
         }
 
         Disk DataDisk {
@@ -54,11 +60,11 @@ configuration PrepareAlwaysOnSqlServer
             DependsOn = "[WaitForDisk]Disk2"
         }
 
-        xWaitforDisk Disk3
+        WaitforDisk Disk3
         {
             DiskId = "3"
-             RetryIntervalSec =20
-             RetryCount = 30
+            RetryIntervalSec = $RetryIntervalSec
+            RetryCount = $RetryCount
         }
 
         Disk DataDisk {
@@ -67,147 +73,115 @@ configuration PrepareAlwaysOnSqlServer
             DependsOn = "[WaitForDisk]Disk3"
         }
 
-        WindowsFeature FC
-        {
+        WindowsFeature Failover-Clustering {
             Name = "Failover-Clustering"
             Ensure = "Present"
         }
 
-        WindowsFeature FCPS
-        {
+        WindowsFeature RSAT-Clustering-PowerShell {
             Name = "RSAT-Clustering-PowerShell"
             Ensure = "Present"
         }
 
-        WindowsFeature ADPS
-        {
+        WindowsFeature RSAT-AD-PowerShell {
             Name = "RSAT-AD-PowerShell"
             Ensure = "Present"
         }
-
-        WaitForADDomain DscForestWait 
-        { 
+        
+        WaitForADDomain WaitForDomain { 
+            DependsOn = "[WindowsFeature]RSAT-AD-PowerShell"
             DomainName = $DomainName 
-            DomainUserCredential= $DomainCreds
-            RetryCount = $RetryCount 
-            RetryIntervalSec = $RetryIntervalSec 
+            Credential = $DomainCreds
         }
 
-        Computer DomainJoin
-        {
+        Computer DomainJoin {
+            DependsOn = "[WaitForADDomain]WaitForDomain"
             Name = $env:COMPUTERNAME
             DomainName = $DomainName
             Credential = $DomainCreds
         }
 
-        Firewall DatabaseEngineFirewallRule1
-        {
-            Direction = "Inbound"
-            Name = "SQL-Server-Database-Engine-TCP-In-1"
+        Firewall DatabaseEngineFirewallRule {
+            Ensure = "Present"
+            Name = "SQL-Server-Database-Engine-TCP-In"
             DisplayName = "SQL Server Database Engine (TCP-In)"
             Description = "Inbound rule for SQL Server to allow TCP traffic for the Database Engine."
-            DisplayGroup = "SQL Server"
-            State = "Enabled"
-            Access = "Allow"
             Protocol = "TCP"
-            LocalPort = $DatabaseEnginePort1 -as [String]
-            Ensure = "Present"
+            Direction = "Inbound"
+            LocalPort = $DatabaseEnginePort -as [String]
         }
 
-        Firewall DatabaseMirroringFirewallRule
-        {
-            Direction = "Inbound"
-            Name = "SQL-Server-Database-Mirroring-TCP-In"
-            DisplayName = "SQL Server Database Mirroring (TCP-In)"
-            Description = "Inbound rule for SQL Server to allow TCP traffic for the Database Mirroring."
-            DisplayGroup = "SQL Server"
-            State = "Enabled"
-            Access = "Allow"
-            Protocol = "TCP"
-            LocalPort = "5022"
+        Firewall ListenerFirewallRule {
             Ensure = "Present"
-        }
-
-        Firewall ListenerFirewallRule1
-        {
-            Direction = "Inbound"
-            Name = "SQL-Server-Availability-Group-Listener-TCP-In-1"
-            DisplayName = "SQL Server Availability Group Listener (TCP-In)"
-            Description = "Inbound rule for SQL Server to allow TCP traffic for the Availability Group listener."
-            DisplayGroup = "SQL Server"
-            State = "Enabled"
-            Access = "Allow"
+            Name = "SQL-Server-ILB-Listener-TCP-In"
+            DisplayName = "SQL Server Internal Load Balancer Listener (TCP-In)"
+            Description = "Inbound rule for SQL Server to allow TCP traffic for the ILB listener."
             Protocol = "TCP"
+            Direction = "Inbound"
             LocalPort = "59999"
-            Ensure = "Present"
         }
 
-        SqlLogin AddDomainAdminAccountToSysadminServerRole
-        {
+        SqlLogin AddDomainAdminSqlLogin {
+            DependsOn = "[WindowsFeature]RSAT-AD-PowerShell"
+            Ensure = "Present"
             Name = $DomainCreds.UserName
             LoginType = "WindowsUser"
-            ServerRoles = "sysadmin"
-            Enabled = $true
-            Credential = $Admincreds
+            InstanceName = "MSSQLSERVER"
+            PsDscRunAsCredential = $DomainAdminCredential
         }
 
-        ADUser CreateSqlServerServiceAccount
-        {
-            DomainAdministratorCredential = $DomainCreds
-            DomainName = $DomainName
-            UserName = $SQLServicecreds.UserName
-            Password = $SQLServicecreds
-            Ensure = "Present"
+        SqlRole AddDomainAdminSqlLoginToSysadminServerRole {
             DependsOn = "[SqlLogin]AddDomainAdminAccountToSysadminServerRole"
+            Ensure = "Present"
+            ServerRoleName = "sysadmin"
+            InstanceName = "MSSQLSERVER"
+            MembersToInclude = $DomainCreds.UserName
         }
 
-        SqlLogin AddSqlServerServiceAccountToSysadminServerRole
-        {
+        ADUser CreateSqlServerServiceAccount {
+            DependsOn = "[SqlRole]AddDomainAdminSqlLoginToSysadminServerRole"
+            Ensure = "Present"
+            DomainName = $DomainName
+            UserName = $SqlServiceCredential.UserName
+            Password = $SqlServiceCredential
+            PsDscRunAsCredential = $DomainCreds
+        }
+
+        SqlLogin AddSqlServerServiceAccountToSysadminServerRole {
+            DependsOn = "[ADUser]CreateSqlServerServiceAccount"
             Name = $SQLCreds.UserName
             LoginType = "WindowsUser"
-            ServerRoles = "sysadmin"
-            Enabled = $true
-            Credential = $Admincreds
-            DependsOn = "[ADUser]CreateSqlServerServiceAccount"
+            InstanceName = "MSSQLSERVER"
+            PsDscRunAsCredential = $DomainAdminCredential
         }
-
-        SqlServer ConfigureSqlServerWithAlwaysOn
-        {
-            InstanceName = $env:COMPUTERNAME
-            SqlAdministratorCredential = $Admincreds
-            ServiceCredential = $SQLCreds
-            MaxDegreeOfParallelism = 1
-            FilePath = "F:\DATA"
-            LogPath = "G:\LOG"
-            DomainAdministratorCredential = $DomainFQDNCreds
+        
+        SqlRole AddDomainAdminSqlLoginToSysadminServerRole {
             DependsOn = "[SqlLogin]AddSqlServerServiceAccountToSysadminServerRole"
-        }
-
-        LocalConfigurationManager 
-        {
-            RebootNodeIfNeeded = $True
+            Ensure = "Present"
+            ServerRoleName = "sysadmin"
+            InstanceName = "MSSQLSERVER"
+            MembersToInclude = $SQLCreds.UserName
         }
 
     }
 }
 
-function Get-NetBIOSName
-{ 
+function Get-NetBIOSName { 
     [OutputType([string])]
     param(
         [string]$DomainName
     )
 
     if ($DomainName.Contains('.')) {
-        $length=$DomainName.IndexOf('.')
+        $length = $DomainName.IndexOf('.')
         if ( $length -ge 16) {
-            $length=15
+            $length = 15
         }
-        return $DomainName.Substring(0,$length)
+        return $DomainName.Substring(0, $length)
     }
     else {
         if ($DomainName.Length -gt 15) {
-            return $DomainName.Substring(0,15)
+            return $DomainName.Substring(0, 15)
         }
         else {
             return $DomainName
@@ -215,18 +189,14 @@ function Get-NetBIOSName
     }
 }
 
-function WaitForSqlSetup
-{
+function WaitForSqlSetup {
     # Wait for SQL Server Setup to finish before proceeding.
-    while ($true)
-    {
-        try
-        {
+    while ($true) {
+        try {
             Get-ScheduledTaskInfo "\ConfigureSqlImageTasks\RunConfigureImage" -ErrorAction Stop
             Start-Sleep -Seconds 5
         }
-        catch
-        {
+        catch {
             break
         }
     }

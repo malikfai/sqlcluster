@@ -15,11 +15,11 @@ configuration CreateFailoverCluster
 
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]
-        $Admincreds,
+        $DomainAdminCredential,
 
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]
-        $SQLServiceCreds,
+        $SqlServiceCredential,
 
         [Parameter(Mandatory)]
         [String]
@@ -46,8 +46,8 @@ configuration CreateFailoverCluster
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion "16.0.0"
     Import-DscResource -ModuleName StorageDsc -ModuleVersion "5.0.1"
 
-    [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
-    [System.Management.Automation.PSCredential]$SQLCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SQLServiceCreds.UserName)", $SQLServiceCreds.Password)
+    [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCredential.UserName)", $DomainAdminCredential.Password)
+    [System.Management.Automation.PSCredential]$SQLCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SqlServiceCredential.UserName)", $SqlServiceCredential.Password)
 
     Enable-CredSSPNTLM -DomainName $DomainName
 
@@ -143,7 +143,7 @@ configuration CreateFailoverCluster
             Name = $DomainCreds.UserName
             LoginType = "WindowsUser"
             InstanceName = "MSSQLSERVER"
-            PsDscRunAsCredential = $Admincreds
+            PsDscRunAsCredential = $DomainAdminCredential
         }
 
         SqlRole AddDomainAdminSqlLoginToSysadminServerRole {
@@ -158,8 +158,8 @@ configuration CreateFailoverCluster
             DependsOn = "[SqlRole]AddDomainAdminSqlLoginToSysadminServerRole"
             Ensure = "Present"
             DomainName = $DomainName
-            UserName = $SQLServicecreds.UserName
-            Password = $SQLServicecreds
+            UserName = $SqlServiceCredential.UserName
+            Password = $SqlServiceCredential
             PsDscRunAsCredential = $DomainCreds
         }
 
@@ -168,7 +168,7 @@ configuration CreateFailoverCluster
             Name = $SQLCreds.UserName
             LoginType = "WindowsUser"
             InstanceName = "MSSQLSERVER"
-            PsDscRunAsCredential = $Admincreds
+            PsDscRunAsCredential = $DomainAdminCredential
         }
         
         SqlRole AddDomainAdminSqlLoginToSysadminServerRole {

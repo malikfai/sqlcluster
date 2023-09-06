@@ -9,7 +9,7 @@ try {
 
     Publish-AzVMDscConfiguration -ConfigurationPath "$PSScriptRoot\dsc\CreateFailoverCluster.ps1" -OutputArchivePath "$PSScriptRoot\dsc\CreateFailoverCluster.ps1.zip" -Force
     Publish-AzVMDscConfiguration -ConfigurationPath "$PSScriptRoot\dsc\CreateFileShareWitness.ps1" -OutputArchivePath "$PSScriptRoot\dsc\CreateFileShareWitness.ps1.zip" -Force
-    #Publish-AzVMDscConfiguration -ConfigurationPath "$PSScriptRoot\dsc\PrepareAlwaysOnSqlServer.ps1" -OutputArchivePath "$PSScriptRoot\dsc\PrepareAlwaysOnSqlServer.ps1.zip" -Force
+    Publish-AzVMDscConfiguration -ConfigurationPath "$PSScriptRoot\dsc\PrepareAlwaysOnSqlServer.ps1" -OutputArchivePath "$PSScriptRoot\dsc\PrepareAlwaysOnSqlServer.ps1.zip" -Force
 }
 catch {
     Write-Host " - Error packaging: $outputZipFile" -ForegroundColor Red
