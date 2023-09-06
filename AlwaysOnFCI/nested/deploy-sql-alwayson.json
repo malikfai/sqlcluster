@@ -103,7 +103,7 @@
           "configurationFunction": "[variables('createClusterConfigurationFunction')]",
           "properties": {
             "DomainName": "[parameters('domainName')]",
-            "DomainAdminCredential" {
+            "DomainAdminCredential": {
               "UserName": "[parameters('domainAdminUsername')]",
               "Password": "PrivateSettingsRef:domainAdminPassword"
             },
