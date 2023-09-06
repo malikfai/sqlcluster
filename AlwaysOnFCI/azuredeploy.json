@@ -146,7 +146,7 @@
             "value": "[parameters('namePrefix')]"
           },
           "domainName": {
-            "value": "[parameters('existingDomainName')]"
+            "value": "[parameters('domainName')]"
           },
           "domainAdminUsername": {
             "value": "[parameters('domainAdminUsername')]"
