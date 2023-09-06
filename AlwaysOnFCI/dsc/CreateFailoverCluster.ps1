@@ -77,7 +77,7 @@ configuration CreateFailoverCluster
             RetryCount = 30
         }
 
-        Disk DataDisk {
+        Disk LogDisk {
             DiskId = "3"
             DriveLetter = "G"
             DependsOn = "[WaitForDisk]Disk3"
@@ -145,14 +145,6 @@ configuration CreateFailoverCluster
             InstanceName = "MSSQLSERVER"
         }
 
-        SqlRole AddDomainAdminSqlLoginToSysadminServerRole {
-            DependsOn = "[SqlLogin]AddDomainAdminAccountToSysadminServerRole"
-            Ensure = "Present"
-            ServerRoleName = "sysadmin"
-            InstanceName = "MSSQLSERVER"
-            MembersToInclude = $DomainCreds.UserName
-        }
-
         ADUser CreateSqlServerServiceAccount {
             DependsOn = "[SqlRole]AddDomainAdminSqlLoginToSysadminServerRole"
             Ensure = "Present"
@@ -162,19 +154,19 @@ configuration CreateFailoverCluster
             PsDscRunAsCredential = $DomainCreds
         }
 
-        SqlLogin AddSqlServerServiceAccountToSysadminServerRole {
+        SqlLogin AddSqlServerServiceLogin {
             DependsOn = "[ADUser]CreateSqlServerServiceAccount"
             Name = $SQLCreds.UserName
             LoginType = "WindowsUser"
             InstanceName = "MSSQLSERVER"
         }
         
-        SqlRole AddDomainAdminSqlLoginToSysadminServerRole {
-            DependsOn = "[SqlLogin]AddSqlServerServiceAccountToSysadminServerRole"
+        SqlRole AddSysadminMembers {
+            DependsOn = "[SqlLogin]AddSqlServerServiceLogin"
             Ensure = "Present"
             ServerRoleName = "sysadmin"
             InstanceName = "MSSQLSERVER"
-            MembersToInclude = $SQLCreds.UserName
+            MembersToInclude = $SQLCreds.UserName, $DomainCreds.UserName
         }
 
         Cluster FailoverCluster

@@ -129,14 +129,6 @@ configuration PrepareAlwaysOnSqlServer
             InstanceName = "MSSQLSERVER"
         }
 
-        SqlRole AddDomainAdminSqlLoginToSysadminServerRole {
-            DependsOn = "[SqlLogin]AddDomainAdminSqlLogin"
-            Ensure = "Present"
-            ServerRoleName = "sysadmin"
-            InstanceName = "MSSQLSERVER"
-            MembersToInclude = $DomainCreds.UserName
-        }
-
         ADUser CreateSqlServerServiceAccount {
             DependsOn = "[SqlRole]AddDomainAdminSqlLoginToSysadminServerRole"
             Ensure = "Present"
@@ -153,12 +145,12 @@ configuration PrepareAlwaysOnSqlServer
             InstanceName = "MSSQLSERVER"
         }
         
-        SqlRole AddSqlServiceLoginToSysadminServerRole {
+        SqlRole AddSysadminMembers {
             DependsOn = "[SqlLogin]AddSqlServerServiceLogin"
             Ensure = "Present"
             ServerRoleName = "sysadmin"
             InstanceName = "MSSQLSERVER"
-            MembersToInclude = $SQLCreds.UserName
+            MembersToInclude = $SQLCreds.UserName, $DomainCreds.UserName
         }
 
     }
