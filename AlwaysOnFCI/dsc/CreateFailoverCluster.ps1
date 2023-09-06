@@ -83,6 +83,12 @@ configuration CreateFailoverCluster
             DependsOn = "[WaitForDisk]Disk3"
         }
 
+        Computer DomainJoin {
+            Name = $env:COMPUTERNAME
+            DomainName = $DomainName
+            Credential = $DomainCreds
+        }
+
         WindowsFeature Failover-Clustering {
             Ensure = "Present"
             Name = "Failover-Clustering"
@@ -124,14 +130,8 @@ configuration CreateFailoverCluster
             LocalPort = "59999"
         }
         
-        Computer DomainJoin {
-            Name = $env:COMPUTERNAME
-            DomainName = $DomainName
-            Credential = $DomainCreds
-        }
-
         ADUser CreateSqlServerServiceAccount {
-            DependsOn = "[Computer]DomainJoin"
+            DependsOn = "[WindowsFeature]RSAT-AD-PowerShell"
             Ensure = "Present"
             DomainName = $DomainName
             UserName = $SqlServiceCredential.UserName

@@ -73,6 +73,12 @@ configuration PrepareAlwaysOnSqlServer
             DriveLetter = "G"
         }
 
+        Computer DomainJoin {
+            Name = $env:COMPUTERNAME
+            DomainName = $DomainName
+            Credential = $DomainCreds
+        }
+
         WindowsFeature Failover-Clustering {
             Ensure = "Present"
             Name = "Failover-Clustering"
@@ -108,14 +114,8 @@ configuration PrepareAlwaysOnSqlServer
             LocalPort = "59999"
         }
 
-        Computer DomainJoin {
-            Name = $env:COMPUTERNAME
-            DomainName = $DomainName
-            Credential = $DomainCreds
-        }
-
         ADUser CreateSqlServerServiceAccount {
-            DependsOn = "[Computer]DomainJoin"
+            DependsOn = "[WindowsFeature]RSAT-AD-PowerShell"
             Ensure = "Present"
             DomainName = $DomainName
             UserName = $SqlServiceCredential.UserName
