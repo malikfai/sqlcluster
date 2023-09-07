@@ -32,7 +32,8 @@ configuration PrepareAlwaysOnSqlServer
     )
 
     Import-DscResource -ModuleName PSDesiredStateConfiguration
-    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion "6.0.1"
+    Import-DscResource -ModuleName xActiveDirectory 
+    #Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion "6.0.1"
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion "8.5.0"
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion "8.2.0"
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion "16.0.0"
@@ -115,16 +116,27 @@ configuration PrepareAlwaysOnSqlServer
             LocalPort = "59999"
         }
 
-        ADUser CreateSqlServerServiceAccount {
-            DependsOn = "[WindowsFeature]RSAT-AD-PowerShell", "[Computer]DomainJoin"
+
+        xADUser CreateSqlServerServiceAccount
+        {
             Ensure = "Present"
+            DomainAdministratorCredential = $DomainCreds
             DomainName = $DomainName
             UserName = $SqlServiceCredential.UserName
             Password = $SqlServiceCredential
+            DependsOn = "[WindowsFeature]RSAT-AD-PowerShell", "[Computer]DomainJoin"
         }
 
+        # ADUser CreateSqlServerServiceAccount {
+        #     DependsOn = "[WindowsFeature]RSAT-AD-PowerShell", "[Computer]DomainJoin"
+        #     Ensure = "Present"
+        #     DomainName = $DomainName
+        #     UserName = $SqlServiceCredential.UserName
+        #     Password = $SqlServiceCredential
+        # }
+
         SqlLogin AddDomainAdminSqlLogin {
-            DependsOn = "[ADUser]CreateSqlServerServiceAccount"
+            DependsOn = "[xADUser]CreateSqlServerServiceAccount"
             Ensure = "Present"
             Name = $DomainCreds.UserName
             LoginType = "WindowsUser"
@@ -132,7 +144,7 @@ configuration PrepareAlwaysOnSqlServer
         }
 
         SqlLogin AddSqlServerServiceSqlLogin {
-            DependsOn = "[ADUser]CreateSqlServerServiceAccount"
+            DependsOn = "[xADUser]CreateSqlServerServiceAccount"
             Name = $SQLCreds.UserName
             LoginType = "WindowsUser"
             InstanceName = "MSSQLSERVER"
