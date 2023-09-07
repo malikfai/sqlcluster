@@ -19,7 +19,7 @@ configuration PrepareAlwaysOnSqlServer
         
         [Parameter(Mandatory)]
         [String]
-        $clusterName,
+        $ClusterName,
 
         [Parameter(Mandatory)]
         [String]
