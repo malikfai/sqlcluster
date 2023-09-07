@@ -16,6 +16,10 @@ configuration PrepareAlwaysOnSqlServer
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]
         $DomainAdminCredential,
+        
+        [Parameter(Mandatory)]
+        [String]
+        $clusterName,
 
         [Parameter(Mandatory)]
         [String]
@@ -43,6 +47,8 @@ configuration PrepareAlwaysOnSqlServer
     Import-DscResource -ModuleName xActiveDirectory 
     #Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion "6.0.1"
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion "8.5.0"
+    Import-DscResource -ModuleName xFailoverCluster 
+    Import-DscResource -ModuleName FailoverClusterDsc -ModuleVersion "2.1.0"
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion "8.2.0"
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion "16.0.0"
     Import-DscResource -ModuleName StorageDsc -ModuleVersion "5.0.1"
@@ -95,6 +101,11 @@ configuration PrepareAlwaysOnSqlServer
             Ensure = "Present"
             Name = "Failover-Clustering"
         }
+        WindowsFeature RSAT-Clustering-Mgmt { 
+            DependsOn = "[WindowsFeature]Failover-Clustering"
+            Ensure = "Present" 
+            Name = "RSAT-Clustering-Mgmt"
+        } 
 
         WindowsFeature RSAT-Clustering-PowerShell {
             Ensure = "Present"
@@ -147,6 +158,45 @@ configuration PrepareAlwaysOnSqlServer
             }
         }
 
+        xCluster FailoverCluster
+        {
+            DependsOn = "[Computer]DomainJoin"
+            Name = $ClusterName
+            DomainAdministratorCredential = $DomainCreds
+            Nodes = $(hostname)
+        }
+
+        xWaitForFileShareWitness WaitForFSW
+        {
+            SharePath = $SharePath
+            DomainAdministratorCredential = $DomainCreds
+
+        }
+
+        xClusterQuorum FailoverClusterQuorum
+        {
+            DependsOn = "[xCluster]FailoverCluster", "[xWaitForFileShareWitness]WaitForFSW"
+            Name = $ClusterName
+            SharePath = $SharePath
+            DomainAdministratorCredential = $DomainCreds
+        }
+
+        ClusterDisk AddClusterDataDisk
+        {
+            DependsOn = "[xCluster]FailoverCluster"
+            Number = 2
+            Ensure = 'Present'
+            Label  = 'SQL-DATA'
+        }
+
+        ClusterDisk AddClusterLogDisk
+        {
+            DependsOn = "[xCluster]FailoverCluster"
+            Number = 3
+            Ensure = 'Present'
+            Label  = 'SQL-LOG'
+        }
+
         SqlSetup InstallSQLNode1
         {
             Action                     = 'InstallFailoverCluster'
@@ -176,7 +226,7 @@ configuration PrepareAlwaysOnSqlServer
 
             PsDscRunAsCredential       = $DomainAdminCredential
 
-            DependsOn                  = "[Script]UninstallUnusedSqlFeatures", "[Disk]DataDisk", "[Disk]LogDisk"
+            DependsOn                  = "[Script]UninstallUnusedSqlFeatures", "[ClusterDisk]AddClusterDataDisk", "[ClusterDisk]AddClusterLogDisk", "[xCluster]FailoverCluster"
         }
 
         #region Install SQL Server Failover Cluster
