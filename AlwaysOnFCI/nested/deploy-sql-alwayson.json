@@ -112,6 +112,10 @@
               "Password": "PrivateSettingsRef:sqlServicePassword"
             },
             "ClusterName": "[variables('clusterName')]",
+            "ClusterNodes": [
+              "[concat(parameters('sqlNamePrefix'),'0')]",
+              "[concat(parameters('sqlNamePrefix'),'1')]"
+            ],
             "SharePath": "[concat('\\\\',parameters('sqlWitnessVMName'),'\\',parameters('sharePath'))]"
           }
         },

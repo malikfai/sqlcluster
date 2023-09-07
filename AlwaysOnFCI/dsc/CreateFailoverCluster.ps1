@@ -26,6 +26,9 @@ configuration CreateFailoverCluster
         $ClusterName,
 
         [Parameter(Mandatory)]
+        [String[]]$ClusterNodes,
+
+        [Parameter(Mandatory)]
         [String]
         $SharePath,
 
@@ -43,7 +46,8 @@ configuration CreateFailoverCluster
     Import-DscResource -ModuleName xActiveDirectory 
     #Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion "6.3.0"
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion "8.5.0"
-    Import-DscResource -ModuleName FailoverClusterDsc -ModuleVersion "2.1.0"
+    Import-DscResource -ModuleName xFailoverCluster 
+    #Import-DscResource -ModuleName FailoverClusterDsc -ModuleVersion "2.1.0"
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion "8.2.0"
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion "16.0.0"
     Import-DscResource -ModuleName StorageDsc -ModuleVersion "5.0.1"
@@ -174,22 +178,46 @@ configuration CreateFailoverCluster
             MembersToInclude = $SQLCreds.UserName, $DomainCreds.UserName
         }
 
-        Cluster FailoverCluster
+        # Cluster FailoverCluster
+        # {
+        #     DependsOn = "[Computer]DomainJoin"
+        #     Name = $ClusterName
+        #     DomainAdministratorCredential = $DomainCreds
+        #     StaticIPAddress = "10.0.1.0/26"
+        # }
+
+        # ClusterQuorum FailoverClusterQuorum
+        # {
+        #     DependsOn = "[Cluster]FailoverCluster"
+        #     IsSingleInstance = "Yes"
+        #     Type = "NodeAndFileShareMajority"
+        #     Resource = $SharePath
+        #     PsDscRunAsCredential = $DomainCreds
+        # }
+        xCluster FailoverCluster
         {
             DependsOn = "[Computer]DomainJoin"
             Name = $ClusterName
             DomainAdministratorCredential = $DomainCreds
-            StaticIPAddress = "10.0.1.0/26"
+            Nodes = $ClusterNodes
         }
 
-        ClusterQuorum FailoverClusterQuorum
+        xWaitForFileShareWitness WaitForFSW
         {
-            DependsOn = "[Cluster]FailoverCluster"
-            IsSingleInstance = "Yes"
-            Type = "NodeAndFileShareMajority"
-            Resource = $SharePath
-            PsDscRunAsCredential = $DomainCreds
+            SharePath = $SharePath
+            DomainAdministratorCredential = $DomainCreds
+
         }
+
+        xClusterQuorum FailoverClusterQuorum
+        {
+            DependsOn = "[xCluster]FailoverCluster", "[xWaitForFileShareWitness]WaitForFSW"
+            Name = $ClusterName
+            SharePath = $SharePath
+            DomainAdministratorCredential = $DomainCreds
+        }
+
+
     }
 }
 
