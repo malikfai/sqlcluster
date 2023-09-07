@@ -78,8 +78,7 @@ configuration PrepareAlwaysOnSqlServer
             DriveLetter = "F"
         }
 
-        WaitforDisk Disk3
-        {
+        WaitforDisk Disk3 {
             DiskId = "3"
             RetryIntervalSec = $RetryIntervalSec
             RetryCount = $RetryCount
@@ -101,6 +100,7 @@ configuration PrepareAlwaysOnSqlServer
             Ensure = "Present"
             Name = "Failover-Clustering"
         }
+
         WindowsFeature RSAT-Clustering-Mgmt { 
             DependsOn = "[WindowsFeature]Failover-Clustering"
             Ensure = "Present" 
@@ -137,7 +137,7 @@ configuration PrepareAlwaysOnSqlServer
             LocalPort = "59999"
         }
 
-        Script "UninstallUnusedSqlFeatures" {
+        Script UninstallUnusedSqlFeatures {
             DependsOn = "[WindowsFeature]RSAT-AD-PowerShell", "[Computer]DomainJoin"
             PsDscRunAsCredential = $LocalAdminCredential
             SetScript = {
@@ -181,66 +181,53 @@ configuration PrepareAlwaysOnSqlServer
             DomainAdministratorCredential = $DomainCreds
         }
 
-        ClusterDisk AddClusterDataDisk
-        {
+        ClusterDisk AddClusterDataDisk {
             DependsOn = "[xCluster]FailoverCluster"
             Number = 2
-            Ensure = 'Present'
-            Label  = 'SQL-DATA'
+            Ensure = "Present"
+            Label = "SQL-DATA"
         }
 
-        ClusterDisk AddClusterLogDisk
-        {
+        ClusterDisk AddClusterLogDisk {
             DependsOn = "[xCluster]FailoverCluster"
             Number = 3
-            Ensure = 'Present'
-            Label  = 'SQL-LOG'
+            Ensure = "Present"
+            Label = "SQL-LOG"
         }
 
-        SqlSetup InstallSQLNode1
-        {
-            Action                     = 'InstallFailoverCluster'
-            ForceReboot                = $false
-            UpdateEnabled              = 'False'
-            SourcePath                 = $SqlSetupFolder
-
-            InstanceName                = 'MSSQLSERVER'
-            Features                   = 'SQL'
-
-            SQLSvcAccount              = $SqlServiceCredential
-            AgtSvcAccount              = $SqlServiceCredential
-            SQLSysAdminAccounts        = $DomainAdminCredential.UserName, $SqlServiceCredential.UserName
-
+        SqlSetup InstallSQLNode1 {
+            DependsOn = "[Script]UninstallUnusedSqlFeatures", "[ClusterDisk]AddClusterDataDisk", "[ClusterDisk]AddClusterLogDisk", "[xCluster]FailoverCluster"
+            Action = "InstallFailoverCluster"
+            ForceReboot = $false
+            UpdateEnabled = "False"
+            SourcePath = $SqlSetupFolder
+            InstanceName = "MSSQLSERVER"
+            Features = "SQL"
+            SQLSvcAccount = $SqlServiceCredential
+            AgtSvcAccount = $SqlServiceCredential
+            SQLSysAdminAccounts = $DomainAdminCredential.UserName, $SqlServiceCredential.UserName
             # Drive F: must be a shared disk.
-            InstallSQLDataDir          = 'F:\MSSQL\Data'
-            SQLUserDBDir               = 'F:\MSSQL\Data'
-            SQLUserDBLogDir            = 'G:\MSSQL\Log'
-            SQLTempDBDir               = 'F:\MSSQL\Temp'
-            SQLTempDBLogDir            = 'F:\MSSQL\Temp'
-            SQLBackupDir               = 'F:\MSSQL\Backup'
-
-
+            InstallSQLDataDir = "F:\MSSQL\Data"
+            SQLUserDBDir = "F:\MSSQL\Data"
+            SQLUserDBLogDir = "G:\MSSQL\Log"
+            SQLTempDBDir = "F:\MSSQL\Temp"
+            SQLTempDBLogDir = "F:\MSSQL\Temp"
+            SQLBackupDir = "F:\MSSQL\Backup"
             FailoverClusterNetworkName = $SqlClusterName
-            FailoverClusterIPAddress   = $SqlClusterIPAddress
- 
-
-            PsDscRunAsCredential       = $DomainAdminCredential
-
-            DependsOn                  = "[Script]UninstallUnusedSqlFeatures", "[ClusterDisk]AddClusterDataDisk", "[ClusterDisk]AddClusterLogDisk", "[xCluster]FailoverCluster"
+            FailoverClusterIPAddress = $SqlClusterIPAddress
+            PsDscRunAsCredential = $DomainAdminCredential
         }
 
         #region Install SQL Server Failover Cluster
-    
 
         xADUser CreateSqlServerServiceAccount
         {
+            DependsOn = "[SqlSetup]InstallSQLNode1"
             Ensure = "Present"
             DomainAdministratorCredential = $DomainCreds
             DomainName = $DomainName
             UserName = $SqlServiceCredential.UserName
             Password = $SqlServiceCredential
-            DependsOn = "[SqlSetup]InstallSQLNode1"
-            
         }
 
         # ADUser CreateSqlServerServiceAccount {
