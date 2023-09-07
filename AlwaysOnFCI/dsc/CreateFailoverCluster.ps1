@@ -131,7 +131,7 @@ configuration CreateFailoverCluster
         }
         
         ADUser CreateSqlServerServiceAccount {
-            DependsOn = "[WindowsFeature]RSAT-AD-PowerShell"
+            DependsOn = "[WindowsFeature]RSAT-AD-PowerShell", "[Computer]DomainJoin"
             Ensure = "Present"
             DomainName = $DomainName
             UserName = $SqlServiceCredential.UserName
