@@ -74,6 +74,7 @@
               "UserName": "[parameters('domainAdminUsername')]",
               "Password": "PrivateSettingsRef:domainAdminPassword"
             },
+            "clusterName": "[variables('clusterName')]",
             "SqlClusterName": "[variables('sqlClusterName')]",
             "SqlClusterIPAddress": "[parameters('sqlClusterIPAddress')]",
             "SqlServiceCredential": {
