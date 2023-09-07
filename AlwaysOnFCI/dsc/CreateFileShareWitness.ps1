@@ -22,6 +22,7 @@ configuration CreateFileShareWitness
         $SharePath
     )
 
+    Import-DscResource -ModuleName PSDesiredStateConfiguration
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion "8.5.0"
     Import-DscResource -ModuleName StorageDsc -ModuleVersion "5.0.1"
 

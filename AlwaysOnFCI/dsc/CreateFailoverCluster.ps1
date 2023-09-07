@@ -39,6 +39,7 @@ configuration CreateFailoverCluster
         $RetryIntervalSec = 30
     )
 
+    Import-DscResource -ModuleName PSDesiredStateConfiguration
     Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion "6.0.1"
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion "8.5.0"
     Import-DscResource -ModuleName FailoverClusterDsc -ModuleVersion "2.1.0"
