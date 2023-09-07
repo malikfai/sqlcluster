@@ -39,6 +39,12 @@
         "description": "Password for the Administrator account of the existing Active Directory Domain"
       }
     },
+    "sqlClusterIPAddress": {
+      "type": "string",
+      "metadata": {
+        "description": "The SQL Server Cluster IP Address"
+      }
+    },
     "sqlServiceUsername": {
       "type": "string",
       "metadata": {
@@ -51,6 +57,7 @@
         "description": "The SQL Server Service account password"
       }
     },
+    
     "diskType": {
       "type": "string",
       "allowedValues": [
@@ -171,6 +178,9 @@
           },
           "domainAdminPassword": {
             "value": "[parameters('domainAdminPassword')]"
+          },        
+          "sqlClusterIPAddress": {
+            "value": "[parameters('sqlClusterIPAddress')]"
           },
           "sqlServiceUsername": {
             "value": "[parameters('sqlServiceUsername')]"

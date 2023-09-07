@@ -17,6 +17,9 @@
     "sqlNamePrefix": {
       "type": "string"
     },
+    "sqlClusterIPAddress": {
+      "type": "string"
+    },
     "sqlServiceUsername": {
       "type": "string"
     },
@@ -47,7 +50,8 @@
     "sqlAOPrepareConfigurationFunction": "PrepareAlwaysOnSqlServer.ps1\\PrepareAlwaysOnSqlServer",
     "createClusterModulesURL": "[uri(parameters('_artifactsLocation'),concat('dsc/CreateFailoverCluster.ps1.zip', parameters('_artifactsLocationSasToken')))]",
     "createClusterConfigurationFunction": "CreateFailoverCluster.ps1\\CreateFailoverCluster",
-    "clusterName": "[concat(parameters('namePrefix'),'-c')]"
+    "clusterName": "[concat(parameters('namePrefix'),'-c')]",
+    "sqlClusterName": "[parameters('sqlNamePrefix')]"
   },
   "resources": [
     {
@@ -70,6 +74,8 @@
               "UserName": "[parameters('domainAdminUsername')]",
               "Password": "PrivateSettingsRef:domainAdminPassword"
             },
+            "SqlClusterName": "[variables('sqlClusterName')]",
+            "SqlClusterIPAddress": "[parameters('sqlClusterIPAddress')]",
             "SqlServiceCredential": {
               "UserName": "[parameters('sqlServiceUsername')]",
               "Password": "PrivateSettingsRef:sqlServicePassword"

@@ -20,6 +20,9 @@
     "domainAdminPassword": {
       "type": "securestring"
     },
+    "sqlClusterIPAddress": {
+      "type": "string"
+    },
     "sqlServiceUsername": {
       "type": "string"
     },
@@ -452,6 +455,9 @@
           },
           "sqlNamePrefix": {
             "value": "[variables('sqlNamePrefix')]"
+          },
+          "sqlClusterIPAddress": {
+            "value": "[parameters('sqlClusterIPAddress')]"
           },
           "sqlServiceUsername": {
             "value": "[parameters('sqlServiceUsername')]"

@@ -18,6 +18,14 @@ configuration PrepareAlwaysOnSqlServer
         $DomainAdminCredential,
 
         [Parameter(Mandatory)]
+        [String]
+        $SqlClusterName,
+
+        [Parameter(Mandatory)]
+        [String]
+        $SqlClusterIPAddress,
+
+        [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]
         $SqlServiceCredential,
 
@@ -50,26 +58,6 @@ configuration PrepareAlwaysOnSqlServer
     {
         LocalConfigurationManager {
             RebootNodeIfNeeded = $True
-        }
-
-        Script "UninstallUnusedSqlFeatures" {
-            PsDscRunAsCredential = $LocalAdminCredential
-            SetScript = {
-                try {
-                    $sqlSetupPath = Join-Path $using:SqlSetupFolder 'setup.exe'
-                    $sqlSetupArgs = '/Action=Uninstall /FEATURES=AS,IS,SQL,RS,Tools,DQC /INSTANCENAME=MSSQLSERVER /Quiet'
-                    $process = Start-Process -FilePath $sqlSetupPath -ArgumentList $sqlSetupArgs -PassThru -Wait
-                    $process.WaitForExit()
-                }
-                catch {
-                    throw "Error uninstalling SQL features"
-                }
-
-            }
-            GetScript = { @{} }
-            TestScript = {
-                return $false
-            }
         }
 
         WaitforDisk Disk2 {
@@ -138,6 +126,60 @@ configuration PrepareAlwaysOnSqlServer
             LocalPort = "59999"
         }
 
+        Script "UninstallUnusedSqlFeatures" {
+            PsDscRunAsCredential = $LocalAdminCredential
+            SetScript = {
+                try {
+                    $sqlSetupPath = Join-Path $using:SqlSetupFolder 'setup.exe'
+                    $sqlSetupArgs = '/Action=Uninstall /FEATURES=AS,IS,SQL,RS,Tools,DQC /INSTANCENAME=MSSQLSERVER /Quiet'
+                    $process = Start-Process -FilePath $sqlSetupPath -ArgumentList $sqlSetupArgs -PassThru -Wait
+                    $process.WaitForExit()
+                }
+                catch {
+                    throw "Error uninstalling SQL features"
+                }
+
+            }
+            GetScript = { @{} }
+            TestScript = {
+                return $false
+            }
+        }
+
+        SqlSetup InstallSQLNode1
+        {
+            Action                     = 'InstallFailoverCluster'
+            ForceReboot                = $false
+            UpdateEnabled              = 'False'
+            SourcePath                 = $SqlSetupFolder
+
+            InstanceName                = 'MSSQLSERVER'
+            Features                   = 'SQL'
+
+            SQLSvcAccount              = $SqlServiceCredential
+            AgtSvcAccount              = $SqlServiceCredential
+            SQLSysAdminAccounts        = $DomainAdminCredential.UserName, $SqlServiceCredential.UserName
+
+            # Drive F: must be a shared disk.
+            InstallSQLDataDir          = 'F:\MSSQL\Data'
+            SQLUserDBDir               = 'F:\MSSQL\Data'
+            SQLUserDBLogDir            = 'G:\MSSQL\Log'
+            SQLTempDBDir               = 'F:\MSSQL\Temp'
+            SQLTempDBLogDir            = 'F:\MSSQL\Temp'
+            SQLBackupDir               = 'F:\MSSQL\Backup'
+
+
+            FailoverClusterNetworkName = $SqlClusterName
+            FailoverClusterIPAddress   = $SqlClusterIPAddress
+ 
+
+            PsDscRunAsCredential       = $DomainAdminCredential
+
+            DependsOn                  = "[Script]UninstallUnusedSqlFeatures", "[Disk]DataDisk", "[Disk]LogDisk"
+        }
+
+        #region Install SQL Server Failover Cluster
+    
 
         xADUser CreateSqlServerServiceAccount
         {
