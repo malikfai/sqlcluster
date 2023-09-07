@@ -40,7 +40,7 @@ configuration CreateFailoverCluster
     )
 
     Import-DscResource -ModuleName PSDesiredStateConfiguration
-    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion "6.0.1"
+    Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion "6.3.0"
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion "8.5.0"
     Import-DscResource -ModuleName FailoverClusterDsc -ModuleVersion "2.1.0"
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion "8.2.0"
@@ -137,6 +137,7 @@ configuration CreateFailoverCluster
             DomainName = $DomainName
             UserName = $SqlServiceCredential.UserName
             Password = $SqlServiceCredential
+            Credential = $DomainCreds
         }
 
         SqlLogin AddDomainAdminSqlLogin {
