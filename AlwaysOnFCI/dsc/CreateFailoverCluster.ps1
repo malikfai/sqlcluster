@@ -52,6 +52,8 @@ configuration CreateFailoverCluster
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion "16.0.0"
     Import-DscResource -ModuleName StorageDsc -ModuleVersion "5.0.1"
 
+    $SqlSetupFolder = "C:\SQLServerFull\"
+
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCredential.UserName)", $DomainAdminCredential.Password)
     [System.Management.Automation.PSCredential]$SQLCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SqlServiceCredential.UserName)", $SqlServiceCredential.Password)
 
@@ -63,6 +65,26 @@ configuration CreateFailoverCluster
     {
         LocalConfigurationManager {
             RebootNodeIfNeeded = $true
+        }
+
+        Script "UninstallUnusedSqlFeatures" {
+            PsDscRunAsCredential = $LocalAdminCredential
+            SetScript = {
+                try {
+                    $sqlSetupPath = Join-Path $using:SqlSetupFolder 'setup.exe'
+                    $sqlSetupArgs = '/Action=Uninstall /FEATURES=AS,IS,SQL,RS,Tools,DQC /INSTANCENAME=MSSQLSERVER /Quiet'
+                    $process = Start-Process -FilePath $sqlSetupPath -ArgumentList $sqlSetupArgs -PassThru -Wait
+                    $process.WaitForExit()
+                }
+                catch {
+                    throw "Error uninstalling SQL features"
+                }
+
+            }
+            GetScript = { @{} }
+            TestScript = {
+                return $false
+            }
         }
 
         WaitforDisk Disk2 {
@@ -194,28 +216,28 @@ configuration CreateFailoverCluster
         #     Resource = $SharePath
         #     PsDscRunAsCredential = $DomainCreds
         # }
-        xCluster FailoverCluster
-        {
-            DependsOn = "[Computer]DomainJoin"
-            Name = $ClusterName
-            DomainAdministratorCredential = $DomainCreds
-            Nodes = $ClusterNodes
-        }
+        # xCluster FailoverCluster
+        # {
+        #     DependsOn = "[Computer]DomainJoin"
+        #     Name = $ClusterName
+        #     DomainAdministratorCredential = $DomainCreds
+        #     Nodes = $ClusterNodes
+        # }
 
-        xWaitForFileShareWitness WaitForFSW
-        {
-            SharePath = $SharePath
-            DomainAdministratorCredential = $DomainCreds
+        # xWaitForFileShareWitness WaitForFSW
+        # {
+        #     SharePath = $SharePath
+        #     DomainAdministratorCredential = $DomainCreds
 
-        }
+        # }
 
-        xClusterQuorum FailoverClusterQuorum
-        {
-            DependsOn = "[xCluster]FailoverCluster", "[xWaitForFileShareWitness]WaitForFSW"
-            Name = $ClusterName
-            SharePath = $SharePath
-            DomainAdministratorCredential = $DomainCreds
-        }
+        # xClusterQuorum FailoverClusterQuorum
+        # {
+        #     DependsOn = "[xCluster]FailoverCluster", "[xWaitForFileShareWitness]WaitForFSW"
+        #     Name = $ClusterName
+        #     SharePath = $SharePath
+        #     DomainAdministratorCredential = $DomainCreds
+        # }
 
 
     }

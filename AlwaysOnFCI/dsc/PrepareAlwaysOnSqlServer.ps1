@@ -39,6 +39,8 @@ configuration PrepareAlwaysOnSqlServer
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion "16.0.0"
     Import-DscResource -ModuleName StorageDsc -ModuleVersion "5.0.1"
 
+    $SqlSetupFolder = "C:\SQLServerFull\"
+
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCredential.UserName)", $DomainAdminCredential.Password)
     [System.Management.Automation.PSCredential]$SQLCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SqlServiceCredential.UserName)", $SqlServiceCredential.Password)
 
@@ -48,6 +50,26 @@ configuration PrepareAlwaysOnSqlServer
     {
         LocalConfigurationManager {
             RebootNodeIfNeeded = $True
+        }
+
+        Script "UninstallUnusedSqlFeatures" {
+            PsDscRunAsCredential = $LocalAdminCredential
+            SetScript = {
+                try {
+                    $sqlSetupPath = Join-Path $using:SqlSetupFolder 'setup.exe'
+                    $sqlSetupArgs = '/Action=Uninstall /FEATURES=AS,IS,SQL,RS,Tools,DQC /INSTANCENAME=MSSQLSERVER /Quiet'
+                    $process = Start-Process -FilePath $sqlSetupPath -ArgumentList $sqlSetupArgs -PassThru -Wait
+                    $process.WaitForExit()
+                }
+                catch {
+                    throw "Error uninstalling SQL features"
+                }
+
+            }
+            GetScript = { @{} }
+            TestScript = {
+                return $false
+            }
         }
 
         WaitforDisk Disk2 {
