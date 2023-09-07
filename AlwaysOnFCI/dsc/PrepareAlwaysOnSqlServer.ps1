@@ -127,6 +127,7 @@ configuration PrepareAlwaysOnSqlServer
         }
 
         Script "UninstallUnusedSqlFeatures" {
+            DependsOn = "[WindowsFeature]RSAT-AD-PowerShell", "[Computer]DomainJoin"
             PsDscRunAsCredential = $LocalAdminCredential
             SetScript = {
                 try {
@@ -188,7 +189,8 @@ configuration PrepareAlwaysOnSqlServer
             DomainName = $DomainName
             UserName = $SqlServiceCredential.UserName
             Password = $SqlServiceCredential
-            DependsOn = "[WindowsFeature]RSAT-AD-PowerShell", "[Computer]DomainJoin"
+            DependsOn = "[SqlSetup]InstallSQLNode1"
+            
         }
 
         # ADUser CreateSqlServerServiceAccount {
