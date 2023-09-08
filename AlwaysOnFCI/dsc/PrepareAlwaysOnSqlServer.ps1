@@ -230,7 +230,7 @@ configuration PrepareAlwaysOnSqlServer
             SQLCollation  = 'SQL_Latin1_General_CP1_CI_AS'
             SQLSvcAccount = $SQLCreds
             AgtSvcAccount = $SQLCreds
-            SQLSysAdminAccounts = $DomainCreds.UserName, $SQLCreds.UserName
+            SQLSysAdminAccounts = $SQLCreds.UserName
             # Drive F: must be a shared disk.
             InstallSQLDataDir = "F:\MSSQL\Data"
             SQLUserDBDir = "F:\MSSQL\Data"
@@ -268,6 +268,7 @@ configuration PrepareAlwaysOnSqlServer
             Ensure = "Present"
             Name = $DomainCreds.UserName
             LoginType = "WindowsUser"
+            ServerName = $SqlClusterName
             InstanceName = "MSSQLSERVER"
         }
 
@@ -275,6 +276,7 @@ configuration PrepareAlwaysOnSqlServer
             DependsOn = "[xADUser]CreateSqlServerServiceAccount"
             Name = $SQLCreds.UserName
             LoginType = "WindowsUser"
+            ServerName = $SqlClusterName
             InstanceName = "MSSQLSERVER"
         }
         
@@ -282,6 +284,7 @@ configuration PrepareAlwaysOnSqlServer
             DependsOn = "[SqlLogin]AddDomainAdminSqlLogin", "[SqlLogin]AddSqlServerServiceSqlLogin"
             Ensure = "Present"
             ServerRoleName = "sysadmin"
+            ServerName = $SqlClusterName
             InstanceName = "MSSQLSERVER"
             MembersToInclude = $SQLCreds.UserName, $DomainCreds.UserName
         }
