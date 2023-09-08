@@ -214,7 +214,7 @@ configuration PrepareAlwaysOnSqlServer
             ForceReboot = $true
             UpdateEnabled = "False"
             SourcePath = $SqlSetupFolder
-            SourceCredential = $SQLCreds
+ 
             InstanceName = "MSSQLSERVER"
             Features = "SQLEngine"
 
