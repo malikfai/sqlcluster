@@ -63,6 +63,8 @@ configuration PrepareAlwaysOnSqlServer
     Import-DscResource -ModuleName StorageDsc -ModuleVersion "5.0.1"
 
     $SqlSetupFolder = "C:\SQLServerFull\"
+    $SqlServiceCredentialName = "$DomainNetbiosName\$SqlServiceCredential"
+    $SqlAgentServiceCredentialName = "$DomainNetbiosName\$SqlAgentServiceCredential"
 
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCredential.UserName)", $DomainAdminCredential.Password)
     [System.Management.Automation.PSCredential]$SQLCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SqlServiceCredential.UserName)", $SqlServiceCredential.Password)
@@ -213,8 +215,8 @@ configuration PrepareAlwaysOnSqlServer
             SourcePath = $SqlSetupFolder
             InstanceName = "MSSQLSERVER"
             Features = "SQLEngine"
-            SQLSvcAccount = "NT AUTHORITY\Network Service"
-            AgtSvcAccount = "NT AUTHORITY\Network Service"
+            SQLSvcAccount = $SqlServiceCredentialName
+            AgtSvcAccount = $SqlAgentServiceCredentialName
             SQLSysAdminAccounts = $DomainAdminCredential.UserName, $SqlServiceCredential.UserName
             # Drive F: must be a shared disk.
             InstallSQLDataDir = "F:\MSSQL\Data"
