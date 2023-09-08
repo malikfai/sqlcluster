@@ -19,6 +19,10 @@ configuration PrepareAlwaysOnSqlServer
         
         [Parameter(Mandatory)]
         [String]
+        $SharePath,
+        
+        [Parameter(Mandatory)]
+        [String]
         $ClusterName,
 
         [Parameter(Mandatory)]
