@@ -45,6 +45,7 @@ configuration AddSqlClusterNode
 
     Import-DscResource -ModuleName PSDesiredStateConfiguration
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion "8.5.0"
+    Import-DscResource -ModuleName FailoverClusterDsc -ModuleVersion "2.1.0"
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion "8.2.0"
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion "16.0.0"
     Import-DscResource -ModuleName StorageDsc -ModuleVersion "5.0.1"
