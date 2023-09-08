@@ -51,7 +51,7 @@
     "createClusterModulesURL": "[uri(parameters('_artifactsLocation'),concat('dsc/CreateFailoverCluster.ps1.zip', parameters('_artifactsLocationSasToken')))]",
     "createClusterConfigurationFunction": "CreateFailoverCluster.ps1\\CreateFailoverCluster",
     "clusterName": "[concat(parameters('namePrefix'),'-c')]",
-    "sqlClusterName": "[parameters('sqlNamePrefix')]"
+    "sqlClusterName": "[concat(parameters('namePrefix'),'-sql')]"
   },
   "resources": [
     {

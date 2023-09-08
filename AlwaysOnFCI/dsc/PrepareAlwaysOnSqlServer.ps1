@@ -208,8 +208,8 @@ configuration PrepareAlwaysOnSqlServer
             SourcePath = $SqlSetupFolder
             InstanceName = "MSSQLSERVER"
             Features = "SQL"
-            SQLSvcAccount = $SqlServiceCredential
-            AgtSvcAccount = $SqlServiceCredential
+            SQLSvcAccount = $SqlServiceCredential.UserName
+            AgtSvcAccount = $SqlServiceCredential.UserName
             SQLSysAdminAccounts = $DomainAdminCredential.UserName, $SqlServiceCredential.UserName
             # Drive F: must be a shared disk.
             InstallSQLDataDir = "F:\MSSQL\Data"
