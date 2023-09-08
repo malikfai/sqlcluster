@@ -46,17 +46,17 @@
     }
   },
   "variables": {
-    "sqlAOPrepareModulesURL": "[uri(parameters('_artifactsLocation'),concat('dsc/PrepareAlwaysOnSqlServer.ps1.zip', parameters('_artifactsLocationSasToken')))]",
-    "sqlAOPrepareConfigurationFunction": "PrepareAlwaysOnSqlServer.ps1\\PrepareAlwaysOnSqlServer",
-    "createClusterModulesURL": "[uri(parameters('_artifactsLocation'),concat('dsc/CreateFailoverCluster.ps1.zip', parameters('_artifactsLocationSasToken')))]",
-    "createClusterConfigurationFunction": "CreateFailoverCluster.ps1\\CreateFailoverCluster",
+    "createSqlClusterModulesUrl": "[uri(parameters('_artifactsLocation'),concat('dsc/CreateSqlCluster.ps1.zip', parameters('_artifactsLocationSasToken')))]",
+    "createSqlClusterConfigurationFunction": "CreateSqlCluster.ps1\\CreateSqlCluster",
+    "addSqlClusterNodeModulesUrl": "[uri(parameters('_artifactsLocation'),concat('dsc/AddSqlClusterNode.ps1.zip', parameters('_artifactsLocationSasToken')))]",
+    "addSqlClusterNodeConfigurationFunction": "AddSqlClusterNode.ps1\\AddSqlClusterNode",
     "clusterName": "[concat(parameters('namePrefix'),'-c')]",
     "sqlClusterName": "[concat(parameters('namePrefix'),'-sql')]"
   },
   "resources": [
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('sqlNamePrefix'),'0/sqlAOPrepare')]",
+      "name": "[concat(parameters('sqlNamePrefix'),'1/CreateSqlCluster')]",
       "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "properties": {
@@ -66,8 +66,8 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "wmfVersion": "5.0",
-          "modulesUrl": "[variables('sqlAOPrepareModulesURL')]",
-          "configurationFunction": "[variables('sqlAOPrepareConfigurationFunction')]",
+          "modulesUrl": "[variables('createSqlClusterModulesUrl')]",
+          "configurationFunction": "[variables('createSqlClusterConfigurationFunction')]",
           "properties": {
             "DomainName": "[parameters('domainName')]",
             "DomainAdminCredential": {
@@ -94,11 +94,11 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('sqlNamePrefix'),'1/CreateCluster')]",
+      "name": "[concat(parameters('sqlNamePrefix'),'2/AddSqlClusterNode')]",
       "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines/extensions',concat(parameters('sqlNamePrefix'),'0'), 'sqlAOPrepare')]"
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions',concat(parameters('sqlNamePrefix'),'1'), 'CreateSqlCluster')]"
       ],
       "properties": {
         "publisher": "Microsoft.Powershell",
@@ -107,8 +107,8 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "wmfVersion": "5.0",
-          "modulesUrl": "[variables('createClusterModulesURL')]",
-          "configurationFunction": "[variables('createClusterConfigurationFunction')]",
+          "modulesUrl": "[variables('addSqlClusterNodeModulesUrl')]",
+          "configurationFunction": "[variables('addSqlClusterNodeConfigurationFunction')]",
           "properties": {
             "DomainName": "[parameters('domainName')]",
             "DomainAdminCredential": {
@@ -120,10 +120,6 @@
               "Password": "PrivateSettingsRef:sqlServicePassword"
             },
             "ClusterName": "[variables('clusterName')]",
-            "ClusterNodes": [
-              "[concat(parameters('sqlNamePrefix'),'0')]",
-              "[concat(parameters('sqlNamePrefix'),'1')]"
-            ],
             "SharePath": "[concat('\\\\',parameters('sqlWitnessVMName'),'\\',parameters('sharePath'))]"
           }
         },

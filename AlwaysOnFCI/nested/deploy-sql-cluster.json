@@ -102,8 +102,8 @@
     "deploySqlWitnessShareTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/deploy-sql-witness.json',parameters('_artifactsLocationSasToken')))]",
     "sqlWitnessSharePath": "[concat(parameters('namePrefix'),'-fsw')]",
     "sqlWitnessVMName": "[concat(variables('sqlNamePrefix'),'w')]",
-    "deploySqlAlwaysOn": "deploySqlAlwaysOn",
-    "deploySqlAlwaysOnTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/deploy-sql-alwayson.json',parameters('_artifactsLocationSasToken')))]",
+    "deploySqlAlwaysOnFci": "deploySqlAlwaysOnFci",
+    "deploySqlAlwaysOnFciTemplateUrl": "[uri(parameters('_artifactsLocation'), concat('nested/deploy-sql-alwayson-fci.json',parameters('_artifactsLocationSasToken')))]",
     "sqlLoadBalancerRule": "[concat(parameters('namePrefix'),'-sql')]"
   },
   "resources": [
@@ -177,7 +177,7 @@
       }
     },
     {
-      "name": "[concat(variables('sqlNamePrefix'), copyindex(), '-nic')]",
+      "name": "[concat(variables('sqlNamePrefix'), copyindex(1), '-nic')]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('location')]",
       "apiVersion": "2020-11-01",
@@ -261,14 +261,14 @@
     {
       "apiVersion": "2020-12-01",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(variables('sqlNamePrefix'), copyindex())]",
+      "name": "[concat(variables('sqlNamePrefix'), copyindex(1))]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "virtualMachineLoop",
         "count": 2
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('sqlNamePrefix'), copyindex(), '-nic'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('sqlNamePrefix'), copyindex(1), '-nic'))]",
         "[resourceId('Microsoft.Compute/availabilitySets', variables('sqlAvailabilitySetName'))]"
       ],
       "properties": {
@@ -279,7 +279,7 @@
           "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('sqlAvailabilitySetName'))]"
         },
         "osProfile": {
-          "computerName": "[concat(variables('sqlNamePrefix'), copyindex())]",
+          "computerName": "[concat(variables('sqlNamePrefix'), copyindex(1))]",
           "adminUsername": "[parameters('localAdminUsername')]",
           "adminPassword": "[parameters('localAdminPassword')]"
         },
@@ -291,7 +291,7 @@
             "version": "[parameters('windowsImageVersion')]"
           },
           "osDisk": {
-            "name": "[concat(variables('sqlNamePrefix'), copyindex(), '_OSDisk')]",
+            "name": "[concat(variables('sqlNamePrefix'), copyindex(1), '_OSDisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage",
             "managedDisk": {
@@ -320,7 +320,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('sqlNamePrefix'), copyindex(), '-nic'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('sqlNamePrefix'), copyindex(1), '-nic'))]"
             }
           ]
         }
@@ -426,18 +426,18 @@
       }
     },
     {
-      "name": "[variables('deploySqlAlwaysOn')]",
+      "name": "[variables('deploySqlAlwaysOnFci')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2020-10-01",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines',concat(variables('sqlNamePrefix'),'0'))]",
         "[resourceId('Microsoft.Compute/virtualMachines',concat(variables('sqlNamePrefix'),'1'))]",
+        "[resourceId('Microsoft.Compute/virtualMachines',concat(variables('sqlNamePrefix'),'2'))]",
         "[variables('deploySqlWitnessShareId')]"
       ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('deploySqlAlwaysOnTemplateUrl')]",
+          "uri": "[variables('deploySqlAlwaysOnFciTemplateUrl')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {

@@ -2,7 +2,7 @@
 # Copyright="� Microsoft Corporation. All rights reserved."
 #
 
-configuration CreateFailoverCluster
+configuration AddSqlClusterNode
 {
     param
     (
