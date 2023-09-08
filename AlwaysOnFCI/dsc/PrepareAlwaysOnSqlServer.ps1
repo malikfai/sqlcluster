@@ -62,13 +62,14 @@ configuration PrepareAlwaysOnSqlServer
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion "16.0.0"
     Import-DscResource -ModuleName StorageDsc -ModuleVersion "5.0.1"
 
-    $SqlSetupFolder = "C:\SQLServerFull\"
-    $SqlServiceCredentialName = "[$($SQLCreds.UserName.ToString())]"
-    $SqlAgentServiceCredentialName = $SqlServiceCredentialName
 
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCredential.UserName)", $DomainAdminCredential.Password)
     [System.Management.Automation.PSCredential]$SQLCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SqlServiceCredential.UserName)", $SqlServiceCredential.Password)
 
+    $SqlSetupFolder = "C:\SQLServerFull\"
+    $SqlServiceCredentialName = "[$($SQLCreds.UserName.ToString())]"
+    $SqlAgentServiceCredentialName = $SqlServiceCredentialName
+    
     WaitForSqlSetup
 
     Node localhost
