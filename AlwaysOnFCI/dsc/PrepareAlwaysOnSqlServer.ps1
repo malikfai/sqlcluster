@@ -216,6 +216,7 @@ configuration PrepareAlwaysOnSqlServer
             SourcePath = $SqlSetupFolder
             InstanceName = "MSSQLSERVER"
             Features = "SQLEngine"
+            SQLCollation  = 'SQL_Latin1_General_CP1_CI_AS'
             SQLSvcAccount = $SqlServiceCredentialName
             AgtSvcAccount = $SqlAgentServiceCredentialName
             SQLSysAdminAccounts = $DomainAdminCredential.UserName, $SqlServiceCredential.UserName
