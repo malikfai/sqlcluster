@@ -16,7 +16,7 @@ configuration PrepareAlwaysOnSqlServer
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]
         $DomainAdminCredential,
-        
+
         [Parameter(Mandatory)]
         [String]
         $SharePath,
@@ -202,6 +202,7 @@ configuration PrepareAlwaysOnSqlServer
         SqlSetup InstallSQLNode1 {
             DependsOn = "[Script]UninstallUnusedSqlFeatures", "[ClusterDisk]AddClusterDataDisk", "[ClusterDisk]AddClusterLogDisk", "[xCluster]FailoverCluster"
             Action = "InstallFailoverCluster"
+            SkipRule = "Cluster_VerifyForErrors"
             ForceReboot = $false
             UpdateEnabled = "False"
             SourcePath = $SqlSetupFolder
