@@ -207,11 +207,16 @@ configuration PrepareAlwaysOnSqlServer
             Label = "SQL-LOG"
         }
 
+        PendingReboot RebootBeforeSQLInstall {
+           DependsOn = "[Script]UninstallUnusedSqlFeatures", "[ClusterDisk]AddClusterDataDisk", "[ClusterDisk]AddClusterLogDisk", "[xCluster]FailoverCluster"
+           Name = "RebootBeforeSQLInstall" 
+        }
+
         SqlSetup InstallSQLNode1 {
-            DependsOn = "[Script]UninstallUnusedSqlFeatures", "[ClusterDisk]AddClusterDataDisk", "[ClusterDisk]AddClusterLogDisk", "[xCluster]FailoverCluster"
+            DependsOn = "[PendingReboot]RebootBeforeSQLInstall"
             Action = "InstallFailoverCluster"
             SkipRule = "Cluster_VerifyForErrors"
-            ForceReboot = $true
+            ForceReboot = $false
             UpdateEnabled = "False"
             SourcePath = $SqlSetupFolder
  
