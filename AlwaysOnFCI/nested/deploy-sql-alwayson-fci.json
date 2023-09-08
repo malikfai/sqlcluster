@@ -115,12 +115,13 @@
               "UserName": "[parameters('domainAdminUsername')]",
               "Password": "PrivateSettingsRef:domainAdminPassword"
             },
+            "SharePath": "[concat('\\\\',parameters('sqlWitnessVMName'),'\\',parameters('sharePath'))]",
+            "ClusterName": "[variables('clusterName')]",
+            "SqlClusterName": "[variables('sqlClusterName')]",
             "SqlServiceCredential": {
               "UserName": "[parameters('sqlServiceUsername')]",
               "Password": "PrivateSettingsRef:sqlServicePassword"
-            },
-            "ClusterName": "[variables('clusterName')]",
-            "SharePath": "[concat('\\\\',parameters('sqlWitnessVMName'),'\\',parameters('sharePath'))]"
+            }
           }
         },
         "protectedSettings": {
