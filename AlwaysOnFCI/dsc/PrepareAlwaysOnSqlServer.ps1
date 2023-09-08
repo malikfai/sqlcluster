@@ -40,7 +40,7 @@ configuration PrepareAlwaysOnSqlServer
         [Parameter()]
         [ValidateNotNullOrEmpty()]
         [System.Management.Automation.PSCredential]
-        $SqlAgentServiceCredential = $SqlServiceCredential
+        $SqlAgentServiceCredential = $SqlServiceCredential,
 
         [UInt32]
         $DatabaseEnginePort = 1433,
