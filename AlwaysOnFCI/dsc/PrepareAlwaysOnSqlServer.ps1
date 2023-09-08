@@ -214,7 +214,7 @@ configuration PrepareAlwaysOnSqlServer
             ForceReboot = $true
             UpdateEnabled = "False"
             SourcePath = $SqlSetupFolder
-            SourceCredential = $SqlServiceCredential
+            SourceCredential = $SQLCreds
             InstanceName = "MSSQLSERVER"
             Features = "SQLEngine"
 
@@ -223,9 +223,9 @@ configuration PrepareAlwaysOnSqlServer
             InstanceDir                = 'C:\Program Files\Microsoft SQL Server'
 
             SQLCollation  = 'SQL_Latin1_General_CP1_CI_AS'
-            SQLSvcAccount = $SqlServiceCredentialName
-            AgtSvcAccount = $SqlAgentServiceCredentialName
-            SQLSysAdminAccounts = $DomainAdminCredential.UserName, $SqlServiceCredential.UserName
+            SQLSvcAccount = $SQLCreds
+            AgtSvcAccount = $SQLCreds
+            SQLSysAdminAccounts = $DomainCreds.UserName, $SQLCreds.UserName
             # Drive F: must be a shared disk.
             InstallSQLDataDir = "F:\MSSQL\Data"
             SQLUserDBDir = "F:\MSSQL\Data"
@@ -235,7 +235,7 @@ configuration PrepareAlwaysOnSqlServer
             SQLBackupDir = "F:\MSSQL\Backup"
             FailoverClusterNetworkName = $SqlClusterName
             FailoverClusterIPAddress = $SqlClusterIPAddress
-            PsDscRunAsCredential = $DomainAdminCredential
+            PsDscRunAsCredential = $DomainCreds
         }
 
         #region Install SQL Server Failover Cluster
