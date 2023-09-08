@@ -208,11 +208,11 @@ configuration PrepareAlwaysOnSqlServer
             DependsOn = "[Script]UninstallUnusedSqlFeatures", "[ClusterDisk]AddClusterDataDisk", "[ClusterDisk]AddClusterLogDisk", "[xCluster]FailoverCluster"
             Action = "InstallFailoverCluster"
             SkipRule = "Cluster_VerifyForErrors"
-            ForceReboot = $false
+            ForceReboot = $true
             UpdateEnabled = "False"
             SourcePath = $SqlSetupFolder
             InstanceName = "MSSQLSERVER"
-            Features = "SQL"
+            Features = "SQLEngine"
             SQLSvcAccount = $SqlServiceCredential
             AgtSvcAccount = $SqlAgentServiceCredential
             SQLSysAdminAccounts = $DomainAdminCredential.UserName, $SqlServiceCredential.UserName
