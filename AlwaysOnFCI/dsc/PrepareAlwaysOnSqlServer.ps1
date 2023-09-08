@@ -37,6 +37,11 @@ configuration PrepareAlwaysOnSqlServer
         [System.Management.Automation.PSCredential]
         $SqlServiceCredential,
 
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [System.Management.Automation.PSCredential]
+        $SqlAgentServiceCredential = $SqlServiceCredential
+
         [UInt32]
         $DatabaseEnginePort = 1433,
 
@@ -208,8 +213,8 @@ configuration PrepareAlwaysOnSqlServer
             SourcePath = $SqlSetupFolder
             InstanceName = "MSSQLSERVER"
             Features = "SQL"
-            SQLSvcAccount = $SqlServiceCredential.UserName
-            AgtSvcAccount = $SqlServiceCredential.UserName
+            SQLSvcAccount = $SqlServiceCredential
+            AgtSvcAccount = $SqlAgentServiceCredential
             SQLSysAdminAccounts = $DomainAdminCredential.UserName, $SqlServiceCredential.UserName
             # Drive F: must be a shared disk.
             InstallSQLDataDir = "F:\MSSQL\Data"
