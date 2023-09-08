@@ -18,19 +18,20 @@ configuration AddSqlClusterNode
         $DomainAdminCredential,
 
         [Parameter(Mandatory)]
-        [System.Management.Automation.PSCredential]
-        $SqlServiceCredential,
+        [String]
+        $SharePath,
 
         [Parameter(Mandatory)]
         [String]
         $ClusterName,
 
         [Parameter(Mandatory)]
-        [String[]]$ClusterNodes,
+        [String]
+        $SqlClusterName,
 
         [Parameter(Mandatory)]
-        [String]
-        $SharePath,
+        [System.Management.Automation.PSCredential]
+        $SqlServiceCredential,
 
         [UInt32]
         $DatabaseEnginePort = 1433,
@@ -43,14 +44,12 @@ configuration AddSqlClusterNode
     )
 
     Import-DscResource -ModuleName PSDesiredStateConfiguration
-    Import-DscResource -ModuleName xActiveDirectory 
-    #Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion "6.3.0"
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion "8.5.0"
-    Import-DscResource -ModuleName xFailoverCluster 
-    #Import-DscResource -ModuleName FailoverClusterDsc -ModuleVersion "2.1.0"
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion "8.2.0"
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion "16.0.0"
     Import-DscResource -ModuleName StorageDsc -ModuleVersion "5.0.1"
+    Import-DscResource -ModuleName xActiveDirectory
+    Import-DscResource -ModuleName xFailoverCluster
 
     $SqlSetupFolder = "C:\SQLServerFull\"
 
@@ -65,26 +64,6 @@ configuration AddSqlClusterNode
     {
         LocalConfigurationManager {
             RebootNodeIfNeeded = $true
-        }
-
-        Script "UninstallUnusedSqlFeatures" {
-            PsDscRunAsCredential = $LocalAdminCredential
-            SetScript = {
-                try {
-                    $sqlSetupPath = Join-Path $using:SqlSetupFolder 'setup.exe'
-                    $sqlSetupArgs = '/Action=Uninstall /FEATURES=AS,IS,SQL,RS,Tools,DQC /INSTANCENAME=MSSQLSERVER /Quiet'
-                    $process = Start-Process -FilePath $sqlSetupPath -ArgumentList $sqlSetupArgs -PassThru -Wait
-                    $process.WaitForExit()
-                }
-                catch {
-                    throw "Error uninstalling SQL features"
-                }
-
-            }
-            GetScript = { @{} }
-            TestScript = {
-                return $false
-            }
         }
 
         WaitforDisk Disk2 {
@@ -158,37 +137,84 @@ configuration AddSqlClusterNode
             LocalPort = "59999"
         }
         
-        # ADUser CreateSqlServerServiceAccount {
-        #     DependsOn = "[WindowsFeature]RSAT-AD-PowerShell", "[Computer]DomainJoin"
-        #     Ensure = "Present"
-        #     DomainName = $DomainName
-        #     UserName = $SqlServiceCredential.UserName
-        #     Password = $SqlServiceCredential
-        #     Credential = $DomainCreds
-        # }
-
-        xADUser CreateSqlServerServiceAccount
-        {
-            Ensure = "Present"
-            DomainAdministratorCredential = $DomainCreds
-            DomainName = $DomainName
-            UserName = $SqlServiceCredential.UserName
-            Password = $SqlServiceCredential
+        Script "UninstallSql" {
             DependsOn = "[WindowsFeature]RSAT-AD-PowerShell", "[Computer]DomainJoin"
+            PsDscRunAsCredential = $LocalAdminCredential
+            SetScript = {
+                try {
+                    $sqlSetupPath = Join-Path $using:SqlSetupFolder 'setup.exe'
+                    $sqlSetupArgs = '/Action=Uninstall /FEATURES=AS,IS,SQL,RS,Tools,DQC /INSTANCENAME=MSSQLSERVER /Quiet'
+                    $process = Start-Process -FilePath $sqlSetupPath -ArgumentList $sqlSetupArgs -PassThru -Wait
+                    $process.WaitForExit()
+                }
+                catch {
+                    throw "Error uninstalling SQL features"
+                }
+
+            }
+            GetScript = { @{} }
+            TestScript = {
+                return $false
+            }
+        }
+
+        xCluster AddClusterNode
+        {
+            DependsOn = "[Computer]DomainJoin"
+            Name = $ClusterName
+            DomainAdministratorCredential = $DomainCreds
+            Nodes = $(hostname)
+        }
+
+        ClusterDisk AddClusterDataDisk {
+            DependsOn = "[xCluster]AddClusterNode"
+            Number = 2
+            Ensure = "Present"
+            Label = "SQL-DATA"
+        }
+
+        ClusterDisk AddClusterLogDisk {
+            DependsOn = "[xCluster]AddClusterNode"
+            Number = 3
+            Ensure = "Present"
+            Label = "SQL-LOG"
+        }
+
+        PendingReboot RebootBeforeSQLInstall {
+            DependsOn = "[Script]UninstallSql", "[ClusterDisk]AddClusterDataDisk", "[ClusterDisk]AddClusterLogDisk"
+            Name = "RebootBeforeSQLInstall" 
+         }
+ 
+        SqlSetup InstallSql {
+            DependsOn = "[PendingReboot]RebootBeforeSQLInstall"
+            Action = "AddNode"
+            SkipRule = "Cluster_VerifyForErrors"
+            ForceReboot = $false
+            UpdateEnabled = "False"
+            SourcePath = $SqlSetupFolder
+            InstanceName = "MSSQLSERVER"
+            Features = "SQLEngine"
+            SQLSvcAccount = $SQLCreds
+            AgtSvcAccount = $SQLCreds
+            SQLSysAdminAccounts = $SQLCreds.UserName
+            FailoverClusterNetworkName = $SqlClusterName
+            PsDscRunAsCredential = $DomainCreds
         }
 
         SqlLogin AddDomainAdminSqlLogin {
-            DependsOn = "[xADUser]CreateSqlServerServiceAccount"
+            DependsOn = "[SqlSetup]InstallSql"
             Ensure = "Present"
             Name = $DomainCreds.UserName
             LoginType = "WindowsUser"
+            ServerName = $SqlClusterName
             InstanceName = "MSSQLSERVER"
         }
 
         SqlLogin AddSqlServerServiceLogin {
-            DependsOn = "[xADUser]CreateSqlServerServiceAccount"
+            DependsOn = "[SqlSetup]InstallSql"
             Name = $SQLCreds.UserName
             LoginType = "WindowsUser"
+            ServerName = $SqlClusterName
             InstanceName = "MSSQLSERVER"
         }
         
@@ -196,55 +222,14 @@ configuration AddSqlClusterNode
             DependsOn = "[SqlLogin]AddDomainAdminSqlLogin", "[SqlLogin]AddSqlServerServiceLogin"
             Ensure = "Present"
             ServerRoleName = "sysadmin"
-            InstanceName = "MSSQLSERVER"
             MembersToInclude = $SQLCreds.UserName, $DomainCreds.UserName
+            ServerName = $SqlClusterName
+            InstanceName = "MSSQLSERVER"
         }
-
-        # Cluster FailoverCluster
-        # {
-        #     DependsOn = "[Computer]DomainJoin"
-        #     Name = $ClusterName
-        #     DomainAdministratorCredential = $DomainCreds
-        #     StaticIPAddress = "10.0.1.0/26"
-        # }
-
-        # ClusterQuorum FailoverClusterQuorum
-        # {
-        #     DependsOn = "[Cluster]FailoverCluster"
-        #     IsSingleInstance = "Yes"
-        #     Type = "NodeAndFileShareMajority"
-        #     Resource = $SharePath
-        #     PsDscRunAsCredential = $DomainCreds
-        # }
-        # xCluster FailoverCluster
-        # {
-        #     DependsOn = "[Computer]DomainJoin"
-        #     Name = $ClusterName
-        #     DomainAdministratorCredential = $DomainCreds
-        #     Nodes = $ClusterNodes
-        # }
-
-        # xWaitForFileShareWitness WaitForFSW
-        # {
-        #     SharePath = $SharePath
-        #     DomainAdministratorCredential = $DomainCreds
-
-        # }
-
-        # xClusterQuorum FailoverClusterQuorum
-        # {
-        #     DependsOn = "[xCluster]FailoverCluster", "[xWaitForFileShareWitness]WaitForFSW"
-        #     Name = $ClusterName
-        #     SharePath = $SharePath
-        #     DomainAdministratorCredential = $DomainCreds
-        # }
-
-
     }
 }
 
 function WaitForSqlSetup {
-    # Wait for SQL Server Setup to finish before proceeding.
     while ($true) {
         try {
             Get-ScheduledTaskInfo "\ConfigureSqlImageTasks\RunConfigureImage" -ErrorAction Stop
@@ -322,4 +307,3 @@ function Enable-CredSSPNTLM {
 
     Write-Verbose "DONE:Setting up CredSSP for NTLM"
 }
-

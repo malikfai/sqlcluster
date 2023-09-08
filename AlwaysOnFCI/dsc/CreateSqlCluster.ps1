@@ -37,11 +37,6 @@ configuration CreateSqlCluster
         [System.Management.Automation.PSCredential]
         $SqlServiceCredential,
 
-        [Parameter()]
-        [ValidateNotNullOrEmpty()]
-        [System.Management.Automation.PSCredential]
-        $SqlAgentServiceCredential = $SqlServiceCredential,
-
         [UInt32]
         $DatabaseEnginePort = 1433,
 
@@ -53,22 +48,18 @@ configuration CreateSqlCluster
     )
 
     Import-DscResource -ModuleName PSDesiredStateConfiguration
-    Import-DscResource -ModuleName xActiveDirectory 
-    #Import-DscResource -ModuleName ActiveDirectoryDsc -ModuleVersion "6.0.1"
     Import-DscResource -ModuleName ComputerManagementDsc -ModuleVersion "8.5.0"
-    Import-DscResource -ModuleName xFailoverCluster 
     Import-DscResource -ModuleName FailoverClusterDsc -ModuleVersion "2.1.0"
     Import-DscResource -ModuleName NetworkingDsc -ModuleVersion "8.2.0"
     Import-DscResource -ModuleName SqlServerDsc -ModuleVersion "16.0.0"
     Import-DscResource -ModuleName StorageDsc -ModuleVersion "5.0.1"
-
+    Import-DscResource -ModuleName xActiveDirectory 
+    Import-DscResource -ModuleName xFailoverCluster 
 
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCredential.UserName)", $DomainAdminCredential.Password)
     [System.Management.Automation.PSCredential]$SQLCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SqlServiceCredential.UserName)", $SqlServiceCredential.Password)
 
     $SqlSetupFolder = "C:\SQLServerFull\"
-    $SqlServiceCredentialName = "[$($SQLCreds.UserName.ToString())]"
-    $SqlAgentServiceCredentialName = $SqlServiceCredentialName
     
     WaitForSqlSetup
 
@@ -149,7 +140,7 @@ configuration CreateSqlCluster
             LocalPort = "59999"
         }
 
-        Script UninstallUnusedSqlFeatures {
+        Script UninstallSql {
             DependsOn = "[WindowsFeature]RSAT-AD-PowerShell", "[Computer]DomainJoin"
             PsDscRunAsCredential = $LocalAdminCredential
             SetScript = {
@@ -208,30 +199,26 @@ configuration CreateSqlCluster
         }
 
         PendingReboot RebootBeforeSQLInstall {
-           DependsOn = "[Script]UninstallUnusedSqlFeatures", "[ClusterDisk]AddClusterDataDisk", "[ClusterDisk]AddClusterLogDisk", "[xCluster]FailoverCluster"
+           DependsOn = "[Script]UninstallSql", "[ClusterDisk]AddClusterDataDisk", "[ClusterDisk]AddClusterLogDisk"
            Name = "RebootBeforeSQLInstall" 
         }
 
-        SqlSetup InstallSQLNode1 {
+        SqlSetup InstallSql {
             DependsOn = "[PendingReboot]RebootBeforeSQLInstall"
             Action = "InstallFailoverCluster"
             SkipRule = "Cluster_VerifyForErrors"
             ForceReboot = $false
             UpdateEnabled = "False"
             SourcePath = $SqlSetupFolder
- 
             InstanceName = "MSSQLSERVER"
             Features = "SQLEngine"
-
-            InstallSharedDir           = 'C:\Program Files\Microsoft SQL Server'
-            InstallSharedWOWDir        = 'C:\Program Files (x86)\Microsoft SQL Server'
-            InstanceDir                = 'C:\Program Files\Microsoft SQL Server'
-
+            InstallSharedDir = 'C:\Program Files\Microsoft SQL Server'
+            InstallSharedWOWDir = 'C:\Program Files (x86)\Microsoft SQL Server'
+            InstanceDir = 'C:\Program Files\Microsoft SQL Server'
             SQLCollation  = 'SQL_Latin1_General_CP1_CI_AS'
             SQLSvcAccount = $SQLCreds
             AgtSvcAccount = $SQLCreds
             SQLSysAdminAccounts = $SQLCreds.UserName
-            # Drive F: must be a shared disk.
             InstallSQLDataDir = "F:\MSSQL\Data"
             SQLUserDBDir = "F:\MSSQL\Data"
             SQLUserDBLogDir = "G:\MSSQL\Log"
@@ -243,25 +230,15 @@ configuration CreateSqlCluster
             PsDscRunAsCredential = $DomainCreds
         }
 
-        #region Install SQL Server Failover Cluster
-
         xADUser CreateSqlServerServiceAccount
         {
-            DependsOn = "[SqlSetup]InstallSQLNode1"
+            DependsOn = "[SqlSetup]InstallSql"
             Ensure = "Present"
             DomainAdministratorCredential = $DomainCreds
             DomainName = $DomainName
             UserName = $SqlServiceCredential.UserName
             Password = $SqlServiceCredential
         }
-
-        # ADUser CreateSqlServerServiceAccount {
-        #     DependsOn = "[WindowsFeature]RSAT-AD-PowerShell", "[Computer]DomainJoin"
-        #     Ensure = "Present"
-        #     DomainName = $DomainName
-        #     UserName = $SqlServiceCredential.UserName
-        #     Password = $SqlServiceCredential
-        # }
 
         SqlLogin AddDomainAdminSqlLogin {
             DependsOn = "[xADUser]CreateSqlServerServiceAccount"
@@ -316,7 +293,6 @@ function Get-NetBIOSName {
 }
 
 function WaitForSqlSetup {
-    # Wait for SQL Server Setup to finish before proceeding.
     while ($true) {
         try {
             Get-ScheduledTaskInfo "\ConfigureSqlImageTasks\RunConfigureImage" -ErrorAction Stop
