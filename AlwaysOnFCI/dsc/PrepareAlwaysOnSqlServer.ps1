@@ -214,8 +214,14 @@ configuration PrepareAlwaysOnSqlServer
             ForceReboot = $true
             UpdateEnabled = "False"
             SourcePath = $SqlSetupFolder
+            SourceCredential = $SqlServiceCredential
             InstanceName = "MSSQLSERVER"
             Features = "SQLEngine"
+
+            InstallSharedDir           = 'C:\Program Files\Microsoft SQL Server'
+            InstallSharedWOWDir        = 'C:\Program Files (x86)\Microsoft SQL Server'
+            InstanceDir                = 'C:\Program Files\Microsoft SQL Server'
+
             SQLCollation  = 'SQL_Latin1_General_CP1_CI_AS'
             SQLSvcAccount = $SqlServiceCredentialName
             AgtSvcAccount = $SqlAgentServiceCredentialName
