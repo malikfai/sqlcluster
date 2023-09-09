@@ -163,7 +163,7 @@ configuration AddSqlClusterNode
         {
             Name                          = $ClusterName
             DomainAdministratorCredential = $DomainCreds
-            DependsOn                     = '[WaitForCluster]WaitForCluster'
+            DependsOn                     = '[Computer]DomainJoin'
         }
 
         # xCluster AddClusterNode
