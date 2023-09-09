@@ -162,6 +162,7 @@ configuration AddSqlClusterNode
         Cluster AddClusterNode
         {
             Name                          = $ClusterName
+            StaticIPAddress = "10.0.1.20"
             DomainAdministratorCredential = $DomainCreds
             DependsOn                     = '[Computer]DomainJoin'
         }
