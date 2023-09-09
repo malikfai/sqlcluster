@@ -159,7 +159,7 @@ configuration AddSqlClusterNode
             }
         }
 
-        Cluster JoinClusterNode
+        Cluster AddClusterNode
         {
             Name                          = $ClusterName
             DomainAdministratorCredential = $DomainCreds
@@ -175,14 +175,14 @@ configuration AddSqlClusterNode
         # }
 
         ClusterDisk AddClusterDataDisk {
-            DependsOn = "[xCluster]AddClusterNode"
+            DependsOn = "[Cluster]AddClusterNode"
             Number = 2
             Ensure = "Present"
             Label = "SQL-DATA"
         }
 
         ClusterDisk AddClusterLogDisk {
-            DependsOn = "[xCluster]AddClusterNode"
+            DependsOn = "[Cluster]AddClusterNode"
             Number = 3
             Ensure = "Present"
             Label = "SQL-LOG"

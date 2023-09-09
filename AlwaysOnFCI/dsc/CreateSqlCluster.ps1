@@ -169,7 +169,7 @@ configuration CreateSqlCluster
         #     Nodes = $(hostname)
         # }
 
-        Cluster CreateCluster {
+        Cluster FailoverCluster {
             Name = $ClusterName
             StaticIPAddress = "10.0.1.20"
             DomainAdministratorCredential = $DomainCreds
@@ -201,21 +201,21 @@ configuration CreateSqlCluster
 
         xClusterQuorum FailoverClusterQuorum
         {
-            DependsOn = "[xCluster]FailoverCluster", "[xWaitForFileShareWitness]WaitForFSW"
+            DependsOn = "[Cluster]FailoverCluster", "[xWaitForFileShareWitness]WaitForFSW"
             Name = $ClusterName
             SharePath = $SharePath
             DomainAdministratorCredential = $DomainCreds
         }
 
         ClusterDisk AddClusterDataDisk {
-            DependsOn = "[xCluster]FailoverCluster"
+            DependsOn = "[Cluster]FailoverCluster"
             Number = 2
             Ensure = "Present"
             Label = "SQL-DATA"
         }
 
         ClusterDisk AddClusterLogDisk {
-            DependsOn = "[xCluster]FailoverCluster"
+            DependsOn = "[Cluster]FailoverCluster"
             Number = 3
             Ensure = "Present"
             Label = "SQL-LOG"
