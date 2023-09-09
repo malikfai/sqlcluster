@@ -176,20 +176,20 @@ configuration CreateSqlCluster
             DependsOn = "[Computer]DomainJoin"
         }
 
-        WaitForCluster WaitForCluster
-        {
-            Name             = $ClusterName
-            RetryIntervalSec = 10
-            RetryCount       = 60
-            DependsOn        = '[Cluster]CreateCluster'
-        }
+        # WaitForCluster WaitForCluster
+        # {
+        #     Name             = $ClusterName
+        #     RetryIntervalSec = 10
+        #     RetryCount       = 60
+        #     DependsOn        = '[Cluster]FailoverCluster'
+        # }
 
-        Cluster AddClusterNode
-        {
-            Name                          = $ClusterName
-            DomainAdministratorCredential = $DomainCreds
-            DependsOn                     = '[WaitForCluster]WaitForCluster'
-        }
+        # Cluster AddClusterNode
+        # {
+        #     Name                          = $ClusterName
+        #     DomainAdministratorCredential = $DomainCreds
+        #     DependsOn                     = '[WaitForCluster]WaitForCluster'
+        # }
         
 
         xWaitForFileShareWitness WaitForFSW
