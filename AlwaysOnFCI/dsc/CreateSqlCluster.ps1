@@ -161,13 +161,36 @@ configuration CreateSqlCluster
             }
         }
 
-        xCluster FailoverCluster
-        {
-            DependsOn = "[Computer]DomainJoin"
+        # xCluster FailoverCluster
+        # {
+        #     DependsOn = "[Computer]DomainJoin"
+        #     Name = $ClusterName
+        #     DomainAdministratorCredential = $DomainCreds
+        #     Nodes = $(hostname)
+        # }
+
+        Cluster CreateCluster {
             Name = $ClusterName
+            StaticIPAddress = "10.0.1.20"
             DomainAdministratorCredential = $DomainCreds
-            Nodes = $(hostname)
+            DependsOn = "[Computer]DomainJoin"
         }
+
+        WaitForCluster WaitForCluster
+        {
+            Name             = $ClusterName
+            RetryIntervalSec = 10
+            RetryCount       = 60
+            DependsOn        = '[Cluster]CreateCluster'
+        }
+
+        Cluster AddClusterNode
+        {
+            Name                          = $ClusterName
+            DomainAdministratorCredential = $DomainCreds
+            DependsOn                     = '[WaitForCluster]WaitForCluster'
+        }
+        
 
         xWaitForFileShareWitness WaitForFSW
         {

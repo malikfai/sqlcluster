@@ -159,13 +159,20 @@ configuration AddSqlClusterNode
             }
         }
 
-        xCluster AddClusterNode
+        Cluster JoinClusterNode
         {
-            DependsOn = "[Computer]DomainJoin"
-            Name = $ClusterName
+            Name                          = $ClusterName
             DomainAdministratorCredential = $DomainCreds
-            Nodes = $(hostname)
+            DependsOn                     = '[WaitForCluster]WaitForCluster'
         }
+
+        # xCluster AddClusterNode
+        # {
+        #     DependsOn = "[Computer]DomainJoin"
+        #     Name = $ClusterName
+        #     DomainAdministratorCredential = $DomainCreds
+        #     Nodes = $(hostname)
+        # }
 
         ClusterDisk AddClusterDataDisk {
             DependsOn = "[xCluster]AddClusterNode"
