@@ -159,13 +159,37 @@ configuration AddSqlClusterNode
             }
         }
 
-        Cluster AddClusterNode
+        WaitForCluster WaitForCluster
         {
-            Name                          = $ClusterName
-            StaticIPAddress = "10.0.1.20"
-            DomainAdministratorCredential = $DomainCreds
-            DependsOn                     = '[Computer]DomainJoin'
+            Name             = $ClusterName
+            RetryIntervalSec = 10
+            RetryCount       = 60
+            DependsOn        = '[Script]UninstallSql'
         }
+
+        Script "JoinExistingCluster"
+            {
+                GetScript = { 
+                    return @{ 'Result' = $true }
+                }
+                SetScript = {
+                    $targetNodeName = $env:COMPUTERNAME
+                    Add-ClusterNode -Name $targetNodeName -Cluster $using:ClusterOwnerNode
+                }
+                TestScript = {
+                    $targetNodeName = $env:COMPUTERNAME
+                    $(Get-ClusterNode -Cluster $using:ClusterOwnerNode).Name -contains $targetNodeName
+                }
+                DependsOn = "[WaitForCluster]WaitForCluster"
+                PsDscRunAsCredential = $DomainCreds
+            }
+        # Cluster AddClusterNode
+        # {
+        #     Name                          = $ClusterName
+        #     StaticIPAddress = "10.0.1.20"
+        #     DomainAdministratorCredential = $DomainCreds
+        #     DependsOn                     = '[Computer]DomainJoin'
+        # }
 
         # xCluster AddClusterNode
         # {
@@ -176,14 +200,14 @@ configuration AddSqlClusterNode
         # }
 
         ClusterDisk AddClusterDataDisk {
-            DependsOn = "[Cluster]AddClusterNode"
+            DependsOn = "[Script]JoinExistingCluster"
             Number = 2
             Ensure = "Present"
             Label = "SQL-DATA"
         }
 
         ClusterDisk AddClusterLogDisk {
-            DependsOn = "[Cluster]AddClusterNode"
+            DependsOn = "[Script]JoinExistingCluster"
             Number = 3
             Ensure = "Present"
             Label = "SQL-LOG"
