@@ -173,12 +173,15 @@ configuration AddSqlClusterNode
                     return @{ 'Result' = $true }
                 }
                 SetScript = {
+                    $ClusterOwnerNode = Get-ClusterGroup | Where-Object { $_.Name -eq "Cluster Group" } | Format-Table OwnerNode
                     $targetNodeName = $env:COMPUTERNAME
-                    Add-ClusterNode -Name $targetNodeName -Cluster $using:ClusterOwnerNode
+                    Add-ClusterNode -Name $targetNodeName -Cluster $ClusterOwnerNode
                 }
                 TestScript = {
+                    #$ClusterOwnerNode = Get-ClusterGroup | Where-Object { $_.Name -eq "Cluster Group" } | Format-Table OwnerNode
                     $targetNodeName = $env:COMPUTERNAME
-                    $(Get-ClusterNode -Cluster $using:ClusterOwnerNode).Name -contains $targetNodeName
+                    $(Get-ClusterNode).Name -contains $targetNodeName
+                    #$(Get-ClusterNode -Cluster $using:ClusterOwnerNode).Name -contains $targetNodeName
                 }
                 DependsOn = "[WaitForCluster]WaitForCluster"
                 PsDscRunAsCredential = $DomainCreds
