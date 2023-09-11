@@ -71,30 +71,6 @@ configuration SqlClusterNode2
             RebootNodeIfNeeded = $true
         }
 
-        WaitforDisk Disk2 {
-            DiskId = "2"
-            RetryIntervalSec = 20
-            RetryCount = 30
-        }
-
-        Disk DataDisk {
-            DiskId = "2"
-            DriveLetter = "F"
-            DependsOn = "[WaitForDisk]Disk2"
-        }
-
-        WaitforDisk Disk3 {
-            DiskId = "3"
-            RetryIntervalSec = 20
-            RetryCount = 30
-        }
-
-        Disk LogDisk {
-            DiskId = "3"
-            DriveLetter = "G"
-            DependsOn = "[WaitForDisk]Disk3"
-        }
-
         WindowsFeature Failover-Clustering {
             Ensure = "Present"
             Name = "Failover-Clustering"
@@ -134,6 +110,44 @@ configuration SqlClusterNode2
             Protocol = "TCP"
             Direction = "Inbound"
             LocalPort = "59999"
+        }
+        
+        WaitForAll WaitForSqlClusterNode1DataDisk {
+            ResourceName = "[Disk]DataDisk"
+            NodeName = $SqlClusterNode1Name
+            RetryIntervalSec = 15            
+            RetryCount = 30 
+        }
+
+        WaitforDisk Disk2 {
+            DiskId = "2"
+            RetryIntervalSec = 20
+            RetryCount = 30
+        }
+
+        Disk DataDisk {
+            DiskId = "2"
+            DriveLetter = "F"
+            DependsOn = "[WaitForDisk]Disk2", "[WaitForAll]WaitForSqlClusterNode1DataDisk"
+        }
+
+        WaitForAll WaitForSqlClusterNode1LogDisk {
+            ResourceName = "[Disk]LogDisk"
+            NodeName = $SqlClusterNode1Name
+            RetryIntervalSec = 15            
+            RetryCount = 30 
+        }
+
+        WaitforDisk Disk3 {
+            DiskId = "3"
+            RetryIntervalSec = 20
+            RetryCount = 30
+        }
+
+        Disk LogDisk {
+            DiskId = "3"
+            DriveLetter = "G"
+            DependsOn = "[WaitForDisk]Disk3", "[WaitForAll]WaitForSqlClusterNode1LogDisk"
         }
         
         Computer DomainJoin {
