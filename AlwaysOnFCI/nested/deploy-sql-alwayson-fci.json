@@ -52,7 +52,7 @@
     "sqlClusterNode1ModulesUrl": "[uri(parameters('_artifactsLocation'),concat('dsc/SqlClusterNode1.ps1.zip', parameters('_artifactsLocationSasToken')))]",
     "sqlClusterNode1ConfigurationFunction": "SqlClusterNode1.ps1\\SqlClusterNode1",
     "sqlClusterNode2ModulesUrl": "[uri(parameters('_artifactsLocation'),concat('dsc/AddSqlClusterNode.ps1.zip', parameters('_artifactsLocationSasToken')))]",
-    "sqlClusterNode2ConfigurationFunction": "AddSqlClusterNode.ps1\\AddSqlClusterNode",
+    "sqlClusterNode2ConfigurationFunction": "SqlClusterNode2.ps1\\SqlClusterNode2",
     "clusterName": "[concat(parameters('namePrefix'),'-c')]",
     "sqlClusterName": "[concat(parameters('namePrefix'),'-sql')]",
     "sqlClusterNode1Name": "[concat(parameters('sqlNamePrefix'),'1')]",
