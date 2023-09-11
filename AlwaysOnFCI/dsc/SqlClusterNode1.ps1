@@ -161,7 +161,7 @@ configuration SqlClusterNode1
 
         WaitForAll WaitForSqlClusterNode2 {
             ResourceName = "[Computer]DomainJoin"
-            NodeName = $SqlClusterNode2Name
+            NodeName = "$SqlClusterNode2Name.$DomainName"
             RetryIntervalSec = 15            
             RetryCount = 30 
             DependsOn = "[Computer]DomainJoin"

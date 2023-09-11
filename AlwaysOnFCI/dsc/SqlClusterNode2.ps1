@@ -111,10 +111,10 @@ configuration SqlClusterNode2
             Direction = "Inbound"
             LocalPort = "59999"
         }
-        
+
         WaitForAll WaitForSqlClusterNode1DataDisk {
             ResourceName = "[Disk]DataDisk"
-            NodeName = $SqlClusterNode1Name
+            NodeName = "$SqlClusterNode1Name.$DomainName"         
             RetryIntervalSec = 15            
             RetryCount = 30 
         }
@@ -133,7 +133,7 @@ configuration SqlClusterNode2
 
         WaitForAll WaitForSqlClusterNode1LogDisk {
             ResourceName = "[Disk]LogDisk"
-            NodeName = $SqlClusterNode1Name
+            NodeName = "$SqlClusterNode1Name.$DomainName"
             RetryIntervalSec = 15            
             RetryCount = 30 
         }
