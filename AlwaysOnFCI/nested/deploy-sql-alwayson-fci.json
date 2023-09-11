@@ -17,6 +17,9 @@
     "sqlNamePrefix": {
       "type": "string"
     },
+    "clusterIPAddress": {
+      "type": "string"
+    },
     "sqlClusterIPAddress": {
       "type": "string"
     },
