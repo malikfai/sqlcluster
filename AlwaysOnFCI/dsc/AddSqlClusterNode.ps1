@@ -173,7 +173,7 @@ configuration AddSqlClusterNode
                     return @{ 'Result' = $true }
                 }
                 SetScript = {
-                    $ClusterOwnerNode = Get-ClusterGroup | Where-Object { $_.Name -eq "Cluster Group" } | Format-Table OwnerNode
+                    $ClusterOwnerNode = "fm-fci-sql-1"
                     $targetNodeName = $env:COMPUTERNAME
                     Add-ClusterNode -Name $targetNodeName -Cluster $ClusterOwnerNode
                 }
