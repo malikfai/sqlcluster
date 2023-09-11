@@ -51,7 +51,8 @@
     "addSqlClusterNodeModulesUrl": "[uri(parameters('_artifactsLocation'),concat('dsc/AddSqlClusterNode.ps1.zip', parameters('_artifactsLocationSasToken')))]",
     "addSqlClusterNodeConfigurationFunction": "AddSqlClusterNode.ps1\\AddSqlClusterNode",
     "clusterName": "[concat(parameters('namePrefix'),'-c')]",
-    "sqlClusterName": "[concat(parameters('namePrefix'),'-sql')]"
+    "sqlClusterName": "[concat(parameters('namePrefix'),'-sql')]",
+    "sqlNode1Name": "[concat(parameters('namePrefix'),'-sql-1')]"
   },
   "resources": [
     {
@@ -118,6 +119,7 @@
             "SharePath": "[concat('\\\\',parameters('sqlWitnessVMName'),'\\',parameters('sharePath'))]",
             "ClusterName": "[variables('clusterName')]",
             "SqlClusterName": "[variables('sqlClusterName')]",
+            "sqlNode1Name": "[concat(parameters('namePrefix'),'-sql-1')]",
             "SqlServiceCredential": {
               "UserName": "[parameters('sqlServiceUsername')]",
               "Password": "PrivateSettingsRef:sqlServicePassword"

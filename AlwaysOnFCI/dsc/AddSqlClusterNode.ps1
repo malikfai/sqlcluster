@@ -30,6 +30,10 @@ configuration AddSqlClusterNode
         $SqlClusterName,
 
         [Parameter(Mandatory)]
+        [string]
+        $SqlNode1Name,
+
+        [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]
         $SqlServiceCredential,
 
@@ -173,15 +177,12 @@ configuration AddSqlClusterNode
                     return @{ 'Result' = $true }
                 }
                 SetScript = {
-                    $ClusterOwnerNode = "fm-fci-sql-1"
                     $targetNodeName = $env:COMPUTERNAME
-                    Add-ClusterNode -Name $targetNodeName -Cluster $ClusterOwnerNode
+                    Add-ClusterNode -Name $targetNodeName -Cluster $using:SqlNode1Name
                 }
                 TestScript = {
-                    #$ClusterOwnerNode = Get-ClusterGroup | Where-Object { $_.Name -eq "Cluster Group" } | Format-Table OwnerNode
                     $targetNodeName = $env:COMPUTERNAME
-                    $(Get-ClusterNode).Name -contains $targetNodeName
-                    #$(Get-ClusterNode -Cluster $using:ClusterOwnerNode).Name -contains $targetNodeName
+                    $(Get-ClusterNode -Cluster $using:SqlNode1Name).Name -contains $targetNodeName
                 }
                 DependsOn = "[WaitForCluster]WaitForCluster"
                 PsDscRunAsCredential = $DomainCreds
