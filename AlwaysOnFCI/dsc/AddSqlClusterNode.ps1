@@ -187,35 +187,20 @@ configuration AddSqlClusterNode
                 DependsOn = "[WaitForCluster]WaitForCluster"
                 PsDscRunAsCredential = $DomainCreds
             }
-        # Cluster AddClusterNode
-        # {
-        #     Name                          = $ClusterName
-        #     StaticIPAddress = "10.0.1.20"
-        #     DomainAdministratorCredential = $DomainCreds
-        #     DependsOn                     = '[Computer]DomainJoin'
+
+        # ClusterDisk AddClusterDataDisk {
+        #     DependsOn = "[Script]JoinExistingCluster"
+        #     Number = 2
+        #     Ensure = "Present"
+        #     Label = "SQL-DATA"
         # }
 
-        # xCluster AddClusterNode
-        # {
-        #     DependsOn = "[Computer]DomainJoin"
-        #     Name = $ClusterName
-        #     DomainAdministratorCredential = $DomainCreds
-        #     Nodes = $(hostname)
+        # ClusterDisk AddClusterLogDisk {
+        #     DependsOn = "[Script]JoinExistingCluster"
+        #     Number = 3
+        #     Ensure = "Present"
+        #     Label = "SQL-LOG"
         # }
-
-        ClusterDisk AddClusterDataDisk {
-            DependsOn = "[Script]JoinExistingCluster"
-            Number = 2
-            Ensure = "Present"
-            Label = "SQL-DATA"
-        }
-
-        ClusterDisk AddClusterLogDisk {
-            DependsOn = "[Script]JoinExistingCluster"
-            Number = 3
-            Ensure = "Present"
-            Label = "SQL-LOG"
-        }
 
         PendingReboot RebootBeforeSQLInstall {
             DependsOn = "[Script]UninstallSql", "[ClusterDisk]AddClusterDataDisk", "[ClusterDisk]AddClusterLogDisk"
