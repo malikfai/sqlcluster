@@ -203,7 +203,7 @@ configuration AddSqlClusterNode
         # }
 
         PendingReboot RebootBeforeSQLInstall {
-            DependsOn = "[Script]UninstallSql", "[ClusterDisk]AddClusterDataDisk", "[ClusterDisk]AddClusterLogDisk"
+            DependsOn = "[Script]UninstallSql"
             Name = "RebootBeforeSQLInstall" 
          }
  
