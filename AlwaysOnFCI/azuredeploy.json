@@ -39,6 +39,12 @@
         "description": "Password for the Administrator account of the existing Active Directory Domain"
       }
     },
+    "clusterIPAddress": {
+      "type": "string",
+      "metadata": {
+        "description": "The Windows Cluster IP Address"
+      }
+    },
     "sqlClusterIPAddress": {
       "type": "string",
       "metadata": {
@@ -178,7 +184,10 @@
           },
           "domainAdminPassword": {
             "value": "[parameters('domainAdminPassword')]"
-          },        
+          }, 
+          "clusterIPAddress": {
+            "value": "[parameters('clusterIPAddress')]"
+          },       
           "sqlClusterIPAddress": {
             "value": "[parameters('sqlClusterIPAddress')]"
           },
