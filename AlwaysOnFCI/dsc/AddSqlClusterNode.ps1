@@ -188,22 +188,36 @@ configuration AddSqlClusterNode
                 PsDscRunAsCredential = $DomainCreds
             }
 
-        # ClusterDisk AddClusterDataDisk {
-        #     DependsOn = "[Script]JoinExistingCluster"
-        #     Number = 2
-        #     Ensure = "Present"
-        #     Label = "SQL-DATA"
-        # }
+        ClusterDisk RemoveClusterDataDisk {
+            DependsOn = "[Script]JoinExistingCluster"
+            Number = 2
+            Ensure = "Absent"
+            Label = "SQL-DATA"
+        }
 
-        # ClusterDisk AddClusterLogDisk {
-        #     DependsOn = "[Script]JoinExistingCluster"
-        #     Number = 3
-        #     Ensure = "Present"
-        #     Label = "SQL-LOG"
-        # }
+        ClusterDisk RemoveClusterLogDisk {
+            DependsOn = "[Script]JoinExistingCluster"
+            Number = 3
+            Ensure = "Absent"
+            Label = "SQL-LOG"
+        }
+
+        ClusterDisk AddClusterDataDisk {
+            DependsOn = "[Script]JoinExistingCluster", "[ClusterDisk]RemoveClusterDataDisk", "[ClusterDisk]RemoveClusterLogDisk"
+            Number = 2
+            Ensure = "Present"
+            Label = "SQL-DATA"
+        }
+
+        ClusterDisk AddClusterLogDisk {
+            DependsOn = "[Script]JoinExistingCluster", "[ClusterDisk]RemoveClusterDataDisk", "[ClusterDisk]RemoveClusterLogDisk"
+            Number = 3
+            Ensure = "Present"
+            Label = "SQL-LOG"
+        }
 
         PendingReboot RebootBeforeSQLInstall {
-            DependsOn = "[Script]UninstallSql"
+            DependsOn = "[Script]UninstallSql","[Script]JoinExistingCluster", "[ClusterDisk]AddClusterDataDisk", "[ClusterDisk]AddClusterLogDisk"
             Name = "RebootBeforeSQLInstall" 
          }
  
