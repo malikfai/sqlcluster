@@ -2,14 +2,14 @@
 # Copyright="� Microsoft Corporation. All rights reserved."
 #
 
-configuration AddSqlClusterNode
+configuration SqlClusterNode1
 {
     param
     (
         [Parameter(Mandatory)]
         [String]
         $DomainName,
-
+        
         [String]
         $DomainNetbiosName = (Get-NetBIOSName -DomainName $DomainName),
 
@@ -20,18 +20,26 @@ configuration AddSqlClusterNode
         [Parameter(Mandatory)]
         [String]
         $SharePath,
-
+        
         [Parameter(Mandatory)]
         [String]
         $ClusterName,
+        
+        [Parameter(Mandatory)]
+        [String]
+        $ClusterIPAddress,
 
         [Parameter(Mandatory)]
         [String]
         $SqlClusterName,
 
         [Parameter(Mandatory)]
+        [String]
+        $SqlClusterIPAddress,
+
+        [Parameter(Mandatory)]
         [string]
-        $SqlNode1Name,
+        $SqlClusterNode2Name,
 
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]
@@ -56,49 +64,41 @@ configuration AddSqlClusterNode
     Import-DscResource -ModuleName xActiveDirectory
     Import-DscResource -ModuleName xFailoverCluster
 
-    $SqlSetupFolder = "C:\SQLServerFull\"
-
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCredential.UserName)", $DomainAdminCredential.Password)
     [System.Management.Automation.PSCredential]$SQLCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SqlServiceCredential.UserName)", $SqlServiceCredential.Password)
 
-    Enable-CredSSPNTLM -DomainName $DomainName
-
+    $SqlSetupFolder = "C:\SQLServerFull\"
+    
     WaitForSqlSetup
 
     Node localhost
     {
         LocalConfigurationManager {
-            RebootNodeIfNeeded = $true
+            RebootNodeIfNeeded = $True
         }
 
         WaitforDisk Disk2 {
             DiskId = "2"
-            RetryIntervalSec = 20
-            RetryCount = 30
+            RetryIntervalSec = $RetryIntervalSec
+            RetryCount = $RetryCount
         }
 
         Disk DataDisk {
+            DependsOn = "[WaitForDisk]Disk2"
             DiskId = "2"
             DriveLetter = "F"
-            DependsOn = "[WaitForDisk]Disk2"
         }
 
         WaitforDisk Disk3 {
             DiskId = "3"
-            RetryIntervalSec = 20
-            RetryCount = 30
+            RetryIntervalSec = $RetryIntervalSec
+            RetryCount = $RetryCount
         }
 
         Disk LogDisk {
+            DependsOn = "[WaitForDisk]Disk3"
             DiskId = "3"
             DriveLetter = "G"
-            DependsOn = "[WaitForDisk]Disk3"
-        }
-
-        Computer DomainJoin {
-            Name = $env:COMPUTERNAME
-            DomainName = $DomainName
-            Credential = $DomainCreds
         }
 
         WindowsFeature Failover-Clustering {
@@ -141,9 +141,31 @@ configuration AddSqlClusterNode
             Direction = "Inbound"
             LocalPort = "59999"
         }
-        
-        Script "UninstallSql" {
-            DependsOn = "[WindowsFeature]RSAT-AD-PowerShell", "[Computer]DomainJoin"
+
+        Computer DomainJoin {
+            DependsOn = "[Disk]DataDisk", "[Disk]LogDisk", "[WindowsFeature]RSAT-Clustering-Mgmt"
+            Name = $env:COMPUTERNAME
+            DomainName = $DomainName
+            Credential = $DomainCreds
+        }
+
+        xADUser CreateSqlServerServiceAccount
+        {
+            DependsOn = "[Computer]DomainJoin"
+            Ensure = "Present"
+            DomainAdministratorCredential = $DomainCreds
+            DomainName = $DomainName
+            UserName = $SqlServiceCredential.UserName
+            Password = $SqlServiceCredential
+        }
+
+        WaitForAll WaitForSqlClusterNode2 {
+            ResourceName = "[Computer]DomainJoin"
+            NodeName = $SqlClusterNode2Name
+            DependsOn = "[Computer]DomainJoin"
+        }
+
+        Script UninstallSql {
             PsDscRunAsCredential = $LocalAdminCredential
             SetScript = {
                 try {
@@ -163,77 +185,95 @@ configuration AddSqlClusterNode
             }
         }
 
-        WaitForCluster WaitForCluster
+        # xCluster FailoverCluster
+        # {
+        #     DependsOn = "[Computer]DomainJoin"
+        #     Name = $ClusterName
+        #     DomainAdministratorCredential = $DomainCreds
+        #     Nodes = $(hostname)
+        # }
+
+        Cluster FailoverCluster {
+            DependsOn = "[WaitForAll]WaitForSqlClusterNode2"
+            Name = $ClusterName
+            StaticIPAddress = $ClusterIPAddress
+            DomainAdministratorCredential = $DomainCreds
+        }
+
+        # WaitForCluster WaitForCluster
+        # {
+        #     Name             = $ClusterName
+        #     RetryIntervalSec = 10
+        #     RetryCount       = 60
+        #     DependsOn        = '[Cluster]FailoverCluster'
+        # }
+
+        # Cluster AddClusterNode
+        # {
+        #     Name                          = $ClusterName
+        #     DomainAdministratorCredential = $DomainCreds
+        #     DependsOn                     = '[WaitForCluster]WaitForCluster'
+        # }
+        
+
+        # xWaitForFileShareWitness WaitForFSW
+        # {
+        #     SharePath = $SharePath
+        #     DomainAdministratorCredential = $DomainCreds
+
+        # }
+
+        ClusterQuorum FailoverClusterQuorum
         {
-            Name             = $ClusterName
-            RetryIntervalSec = 10
-            RetryCount       = 60
-            DependsOn        = '[Script]UninstallSql'
-        }
-
-        Script "JoinExistingCluster"
-            {
-                GetScript = { 
-                    return @{ 'Result' = $true }
-                }
-                SetScript = {
-                    $targetNodeName = $env:COMPUTERNAME
-                    Add-ClusterNode -Name $targetNodeName -Cluster $using:SqlNode1Name
-                }
-                TestScript = {
-                    $targetNodeName = $env:COMPUTERNAME
-                    $(Get-ClusterNode -Cluster $using:SqlNode1Name).Name -contains $targetNodeName
-                }
-                DependsOn = "[WaitForCluster]WaitForCluster"
-                PsDscRunAsCredential = $DomainCreds
-            }
-
-        ClusterDisk RemoveClusterDataDisk {
-            DependsOn = "[Script]JoinExistingCluster"
-            Number = 2
-            Ensure = "Absent"
-            Label = "SQL-DATA"
-        }
-
-        ClusterDisk RemoveClusterLogDisk {
-            DependsOn = "[Script]JoinExistingCluster"
-            Number = 3
-            Ensure = "Absent"
-            Label = "SQL-LOG"
+            DependsOn = "[Cluster]FailoverCluster"
+            IsSingleInstance = "Yes"
+            Type = "NodeAndFileShareMajority"
+            Resource = $SharePath
         }
 
         ClusterDisk AddClusterDataDisk {
-            DependsOn = "[Script]JoinExistingCluster", "[ClusterDisk]RemoveClusterDataDisk", "[ClusterDisk]RemoveClusterLogDisk"
+            DependsOn = "[Cluster]FailoverCluster"
             Number = 2
             Ensure = "Present"
             Label = "SQL-DATA"
         }
 
         ClusterDisk AddClusterLogDisk {
-            DependsOn = "[Script]JoinExistingCluster", "[ClusterDisk]RemoveClusterDataDisk", "[ClusterDisk]RemoveClusterLogDisk"
+            DependsOn = "[Cluster]FailoverCluster"
             Number = 3
             Ensure = "Present"
             Label = "SQL-LOG"
         }
 
         PendingReboot RebootBeforeSQLInstall {
-            DependsOn = "[Script]UninstallSql","[Script]JoinExistingCluster", "[ClusterDisk]AddClusterDataDisk", "[ClusterDisk]AddClusterLogDisk"
-            Name = "RebootBeforeSQLInstall" 
-         }
- 
+           DependsOn = "[Script]UninstallSql", "[ClusterDisk]AddClusterDataDisk", "[ClusterDisk]AddClusterLogDisk"
+           Name = "RebootBeforeSQLInstall" 
+        }
+
         SqlSetup InstallSql {
-            DependsOn = "[PendingReboot]RebootBeforeSQLInstall"
-            Action = "AddNode"
+            DependsOn = "[xADUser]CreateSqlServerServiceAccount", "[PendingReboot]RebootBeforeSQLInstall"
+            Action = "InstallFailoverCluster"
             SkipRule = "Cluster_VerifyForErrors"
             ForceReboot = $false
             UpdateEnabled = "False"
             SourcePath = $SqlSetupFolder
             InstanceName = "MSSQLSERVER"
             Features = "SQLEngine"
+            InstallSharedDir = 'C:\Program Files\Microsoft SQL Server'
+            InstallSharedWOWDir = 'C:\Program Files (x86)\Microsoft SQL Server'
+            InstanceDir = 'C:\Program Files\Microsoft SQL Server'
+            SQLCollation  = 'SQL_Latin1_General_CP1_CI_AS'
             SQLSvcAccount = $SQLCreds
             AgtSvcAccount = $SQLCreds
             SQLSysAdminAccounts = $SQLCreds.UserName
+            InstallSQLDataDir = "F:\MSSQL\Data"
+            SQLUserDBDir = "F:\MSSQL\Data"
+            SQLUserDBLogDir = "G:\MSSQL\Log"
+            SQLTempDBDir = "F:\MSSQL\Temp"
+            SQLTempDBLogDir = "F:\MSSQL\Temp"
+            SQLBackupDir = "F:\MSSQL\Backup"
             FailoverClusterNetworkName = $SqlClusterName
+            FailoverClusterIPAddress = $SqlClusterIPAddress
             PsDscRunAsCredential = $DomainCreds
         }
 
@@ -246,8 +286,8 @@ configuration AddSqlClusterNode
             InstanceName = "MSSQLSERVER"
         }
 
-        SqlLogin AddSqlServerServiceLogin {
-            DependsOn = "[SqlSetup]InstallSql"
+        SqlLogin AddSqlServerServiceSqlLogin {
+            DependsOn = "[SqlSetup]InstallSql", "[xADUser]CreateSqlServerServiceAccount"
             Name = $SQLCreds.UserName
             LoginType = "WindowsUser"
             ServerName = $SqlClusterName
@@ -255,25 +295,14 @@ configuration AddSqlClusterNode
         }
         
         SqlRole AddSysadminMembers {
-            DependsOn = "[SqlLogin]AddDomainAdminSqlLogin", "[SqlLogin]AddSqlServerServiceLogin"
+            DependsOn = "[SqlLogin]AddDomainAdminSqlLogin", "[SqlLogin]AddSqlServerServiceSqlLogin"
             Ensure = "Present"
             ServerRoleName = "sysadmin"
-            MembersToInclude = $SQLCreds.UserName, $DomainCreds.UserName
             ServerName = $SqlClusterName
             InstanceName = "MSSQLSERVER"
+            MembersToInclude = $SQLCreds.UserName, $DomainCreds.UserName
         }
-    }
-}
 
-function WaitForSqlSetup {
-    while ($true) {
-        try {
-            Get-ScheduledTaskInfo "\ConfigureSqlImageTasks\RunConfigureImage" -ErrorAction Stop
-            Start-Sleep -Seconds 5
-        }
-        catch {
-            break
-        }
     }
 }
 
@@ -300,46 +329,14 @@ function Get-NetBIOSName {
     }
 }
 
-function Enable-CredSSPNTLM { 
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$DomainName
-    )
-    
-    # This is needed for the case where NTLM authentication is used
-
-    Write-Verbose 'STARTED:Setting up CredSSP for NTLM'
-   
-    Enable-WSManCredSSP -Role client -DelegateComputer localhost, *.$DomainName -Force -ErrorAction SilentlyContinue
-    Enable-WSManCredSSP -Role server -Force -ErrorAction SilentlyContinue
-
-    if (-not (Test-Path HKLM:\SOFTWARE\Policies\Microsoft\Windows\CredentialsDelegation -ErrorAction SilentlyContinue)) {
-        New-Item -Path HKLM:\SOFTWARE\Policies\Microsoft\Windows -Name '\CredentialsDelegation' -ErrorAction SilentlyContinue
+function WaitForSqlSetup {
+    while ($true) {
+        try {
+            Get-ScheduledTaskInfo "\ConfigureSqlImageTasks\RunConfigureImage" -ErrorAction Stop
+            Start-Sleep -Seconds 5
+        }
+        catch {
+            break
+        }
     }
-
-    if ( -not (Get-ItemProperty HKLM:\SOFTWARE\Policies\Microsoft\Windows\CredentialsDelegation -Name 'AllowFreshCredentialsWhenNTLMOnly' -ErrorAction SilentlyContinue)) {
-        New-ItemProperty HKLM:\SOFTWARE\Policies\Microsoft\Windows\CredentialsDelegation -Name 'AllowFreshCredentialsWhenNTLMOnly' -Value '1' -PropertyType dword -ErrorAction SilentlyContinue
-    }
-
-    if (-not (Get-ItemProperty HKLM:\SOFTWARE\Policies\Microsoft\Windows\CredentialsDelegation -Name 'ConcatenateDefaults_AllowFreshNTLMOnly' -ErrorAction SilentlyContinue)) {
-        New-ItemProperty HKLM:\SOFTWARE\Policies\Microsoft\Windows\CredentialsDelegation -Name 'ConcatenateDefaults_AllowFreshNTLMOnly' -Value '1' -PropertyType dword -ErrorAction SilentlyContinue
-    }
-
-    if (-not (Test-Path HKLM:\SOFTWARE\Policies\Microsoft\Windows\CredentialsDelegation\AllowFreshCredentialsWhenNTLMOnly -ErrorAction SilentlyContinue)) {
-        New-Item -Path HKLM:\SOFTWARE\Policies\Microsoft\Windows\CredentialsDelegation -Name 'AllowFreshCredentialsWhenNTLMOnly' -ErrorAction SilentlyContinue
-    }
-
-    if (-not (Get-ItemProperty HKLM:\SOFTWARE\Policies\Microsoft\Windows\CredentialsDelegation\AllowFreshCredentialsWhenNTLMOnly -Name '1' -ErrorAction SilentlyContinue)) {
-        New-ItemProperty HKLM:\SOFTWARE\Policies\Microsoft\Windows\CredentialsDelegation\AllowFreshCredentialsWhenNTLMOnly -Name '1' -Value "wsman/$env:COMPUTERNAME" -PropertyType string -ErrorAction SilentlyContinue
-    }
-
-    if (-not (Get-ItemProperty HKLM:\SOFTWARE\Policies\Microsoft\Windows\CredentialsDelegation\AllowFreshCredentialsWhenNTLMOnly -Name '2' -ErrorAction SilentlyContinue)) {
-        New-ItemProperty HKLM:\SOFTWARE\Policies\Microsoft\Windows\CredentialsDelegation\AllowFreshCredentialsWhenNTLMOnly -Name '2' -Value "wsman/localhost" -PropertyType string -ErrorAction SilentlyContinue
-    }
-
-    if (-not (Get-ItemProperty HKLM:\SOFTWARE\Policies\Microsoft\Windows\CredentialsDelegation\AllowFreshCredentialsWhenNTLMOnly -Name '3' -ErrorAction SilentlyContinue)) {
-        New-ItemProperty HKLM:\SOFTWARE\Policies\Microsoft\Windows\CredentialsDelegation\AllowFreshCredentialsWhenNTLMOnly -Name '3' -Value "wsman/*.$DomainName" -PropertyType string -ErrorAction SilentlyContinue
-    }
-
-    Write-Verbose "DONE:Setting up CredSSP for NTLM"
 }

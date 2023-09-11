@@ -46,18 +46,19 @@
     }
   },
   "variables": {
-    "createSqlClusterModulesUrl": "[uri(parameters('_artifactsLocation'),concat('dsc/CreateSqlCluster.ps1.zip', parameters('_artifactsLocationSasToken')))]",
-    "createSqlClusterConfigurationFunction": "CreateSqlCluster.ps1\\CreateSqlCluster",
-    "addSqlClusterNodeModulesUrl": "[uri(parameters('_artifactsLocation'),concat('dsc/AddSqlClusterNode.ps1.zip', parameters('_artifactsLocationSasToken')))]",
-    "addSqlClusterNodeConfigurationFunction": "AddSqlClusterNode.ps1\\AddSqlClusterNode",
+    "sqlClusterNode1ModulesUrl": "[uri(parameters('_artifactsLocation'),concat('dsc/SqlClusterNode1.ps1.zip', parameters('_artifactsLocationSasToken')))]",
+    "sqlClusterNode1ConfigurationFunction": "SqlClusterNode1.ps1\\SqlClusterNode1",
+    "sqlClusterNode2ModulesUrl": "[uri(parameters('_artifactsLocation'),concat('dsc/AddSqlClusterNode.ps1.zip', parameters('_artifactsLocationSasToken')))]",
+    "sqlClusterNode2ConfigurationFunction": "AddSqlClusterNode.ps1\\AddSqlClusterNode",
     "clusterName": "[concat(parameters('namePrefix'),'-c')]",
     "sqlClusterName": "[concat(parameters('namePrefix'),'-sql')]",
-    "sqlNode1Name": "[concat(parameters('namePrefix'),'-sql-1')]"
+    "sqlClusterNode1Name": "[concat(parameters('sqlNamePrefix'),'1')]",
+    "sqlClusterNode2Name": "[concat(parameters('sqlNamePrefix'),'2')]"
   },
   "resources": [
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('sqlNamePrefix'),'1/CreateSqlCluster')]",
+      "name": "[concat(variables('sqlClusterNode1Name'),'/SqlClusterNode1')]",
       "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
       "properties": {
@@ -67,8 +68,8 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "wmfVersion": "5.0",
-          "modulesUrl": "[variables('createSqlClusterModulesUrl')]",
-          "configurationFunction": "[variables('createSqlClusterConfigurationFunction')]",
+          "modulesUrl": "[variables('sqlClusterNode1ModulesUrl')]",
+          "configurationFunction": "[variables('sqlClusterNode1ConfigurationFunction')]",
           "properties": {
             "DomainName": "[parameters('domainName')]",
             "DomainAdminCredential": {
@@ -77,8 +78,10 @@
             },
             "SharePath": "[concat('\\\\',parameters('sqlWitnessVMName'),'\\',parameters('sharePath'))]",
             "ClusterName": "[variables('clusterName')]",
+            "ClusterIPAddress": "[parameters('clusterIPAddress')]",
             "SqlClusterName": "[variables('sqlClusterName')]",
             "SqlClusterIPAddress": "[parameters('sqlClusterIPAddress')]",
+            "SqlClusterNode2Name": "[variables('sqlClusterNode2Name')]",
             "SqlServiceCredential": {
               "UserName": "[parameters('sqlServiceUsername')]",
               "Password": "PrivateSettingsRef:sqlServicePassword"
@@ -95,12 +98,9 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('sqlNamePrefix'),'2/AddSqlClusterNode')]",
+      "name": "[concat(variables('sqlClusterNode2Name'),'/SqlClusterNode2')]",
       "apiVersion": "2020-12-01",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines/extensions',concat(parameters('sqlNamePrefix'),'1'), 'CreateSqlCluster')]"
-      ],
       "properties": {
         "publisher": "Microsoft.Powershell",
         "type": "DSC",
@@ -108,8 +108,8 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "wmfVersion": "5.0",
-          "modulesUrl": "[variables('addSqlClusterNodeModulesUrl')]",
-          "configurationFunction": "[variables('addSqlClusterNodeConfigurationFunction')]",
+          "modulesUrl": "[variables('sqlClusterNode2ModulesUrl')]",
+          "configurationFunction": "[variables('sqlClusterNode2ConfigurationFunction')]",
           "properties": {
             "DomainName": "[parameters('domainName')]",
             "DomainAdminCredential": {
@@ -119,7 +119,7 @@
             "SharePath": "[concat('\\\\',parameters('sqlWitnessVMName'),'\\',parameters('sharePath'))]",
             "ClusterName": "[variables('clusterName')]",
             "SqlClusterName": "[variables('sqlClusterName')]",
-            "sqlNode1Name": "[concat(parameters('namePrefix'),'-sql-1')]",
+            "SqlClusterNode1Name": "[variables('sqlClusterNode1Name')]",
             "SqlServiceCredential": {
               "UserName": "[parameters('sqlServiceUsername')]",
               "Password": "PrivateSettingsRef:sqlServicePassword"
