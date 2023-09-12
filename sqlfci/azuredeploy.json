@@ -81,12 +81,18 @@
             },
             "defaultValue": "Enterprise"
         },
-        "existingSubnetResourceID": {
+        "existingSqlSubnetName": {
             "type": "string",
             "metadata": {
-                "description": "Resource ID for existing Virtual Network subnet to which VM NICs should be attached"
+              "description": "Name of the existing subnet in the existing VNET to which the SQL & Witness VMs should be deployed"
             }
-        },
+          },
+          "existingVirtualNetworkName": {
+            "type": "string",
+            "metadata": {
+              "description": "Name of the existing VNET"
+            }
+          },
         "enableAcceleratedNetworking": {
             "type": "bool",
             "metadata": {
@@ -194,6 +200,7 @@
             }
         ],
         "diskArray": "[if(parameters('combineDataAndLogDisk'),if(equals(parameters('witnessType'),'Cloud'),take(variables('dataDisks'),1),createArray(first(variables('dataDisks')),last(variables('dataDisks')))),if(equals(parameters('witnessType'),'Cloud'),take(variables('dataDisks'),2),variables('dataDisks')))]",
+        "existingSubnetResourceID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'), parameters('existingSqlSubnetName'))]",
         "witnessStorageName": "[concat(parameters('namePrefix'),'w',uniqueString(resourceGroup().name))]",
         "witnessStorageType": "Standard_LRS",
         "apiVersionStorage": "2019-06-01",
@@ -205,7 +212,7 @@
                 "properties": {
                     "privateIPAllocationMethod": "Dynamic",
                     "subnet": {
-                        "id": "[parameters('existingSubnetResourceID')]"
+                        "id": "[variables('existingSubnetResourceID')]"
                     }
                 }
             },
@@ -214,7 +221,7 @@
                 "properties": {
                     "privateIPAllocationMethod": "Dynamic",
                     "subnet": {
-                        "id": "[parameters('existingSubnetResourceID')]"
+                        "id": "[variables('existingSubnetResourceID')]"
                     }
                 }
             }
@@ -490,7 +497,7 @@
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
                             "subnet": {
-                                "id": "[parameters('existingSubnetResourceID')]"
+                                "id": "[variables('existingSubnetResourceID')]"
                             },
                             "loadBalancerBackendAddressPools": [
                                 {
