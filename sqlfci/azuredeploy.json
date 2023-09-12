@@ -165,7 +165,7 @@
         },
         "_artifactsLocation": {
             "type": "string",
-            "defaultValue": "[deployment().properties.templateLink.uri]"
+            "defaultValue": "[split(deployment().properties.templateLink.uri, '/azuredeploy.json')[0]]"
         },
         "_artifactsLocationSasToken": {
             "type": "securestring",
