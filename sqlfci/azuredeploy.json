@@ -125,6 +125,15 @@
             },
             "defaultValue": 1023
         },
+        "msdtcDiskSizeGB": {
+            "type": "int",
+            "minValue": 256,
+            "maxValue": 32767,
+            "metadata": {
+                "description": "Size of shared data disk for cluster in GB (Min=256, Max=32767)"
+            },
+            "defaultValue": 1023
+        },
         "combineDataAndLogDisk": {
             "type": "bool",
             "metadata": {
@@ -171,6 +180,7 @@
         "asSkuName": "Aligned",
         "dataDiskName": "[concat(parameters('namePrefix'),'-datadisk0')]",
         "logDiskName": "[concat(parameters('namePrefix'),'-logdisk0')]",
+        "msdtcDiskName": "[concat(parameters('namePrefix'),'-msdtcdisk0')]",
         "witnessDiskName": "[concat(parameters('namePrefix'),'-witnessdisk0')]",
         "witnessDiskSizeGB": 256,
         "dataDisks": [
@@ -196,6 +206,14 @@
                 "createOption": "attach",
                 "managedDisk": {
                     "id": "[resourceId('Microsoft.Compute/disks/', variables('witnessDiskName'))]"
+                }
+            },
+            {
+                "lun": 3,
+                "name": "[variables('msdtcDiskName')]",
+                "createOption": "attach",
+                "managedDisk": {
+                    "id": "[resourceId('Microsoft.Compute/disks/', variables('msdtcDiskName'))]"
                 }
             }
         ],
@@ -336,6 +354,22 @@
                     "createOption": "Empty"
                 },
                 "diskSizeGB": "[parameters('logDiskSizeGB')]",
+                "maxShares": "[variables('vmCount')]"
+            }
+        },
+        {
+            "name": "[variables('msdtcDiskName')]",
+            "type": "Microsoft.Compute/disks",
+            "location": "[parameters('location')]",
+            "apiVersion": "2019-07-01",
+            "sku": {
+                "name": "Premium_LRS"
+            },
+            "properties": {
+                "creationData": {
+                    "createOption": "Empty"
+                },
+                "diskSizeGB": "[parameters('msdtcDiskSizeGB')]",
                 "maxShares": "[variables('vmCount')]"
             }
         },
@@ -523,6 +557,7 @@
                 "[resourceId('Microsoft.Compute/availabilitySets', variables('asName'))]",
                 "[resourceId('Microsoft.Compute/disks', variables('dataDiskName'))]",
                 "[resourceId('Microsoft.Compute/disks', variables('logDiskName'))]",
+                "[resourceId('Microsoft.Compute/disks', variables('msdtcDiskName'))]",
                 "[resourceId('Microsoft.Compute/disks', variables('witnessDiskName'))]"
             ],
             "properties": {
