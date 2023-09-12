@@ -134,13 +134,6 @@
             },
             "defaultValue": 1023
         },
-        "combineDataAndLogDisk": {
-            "type": "bool",
-            "metadata": {
-                "description": "Should Data and Logs be combined on a single shared disk?"
-            },
-            "defaultValue": false
-        },
         "witnessType": {
             "type": "string",
             "allowedValues":[
@@ -202,22 +195,22 @@
             },
             {
                 "lun": 2,
-                "name": "[variables('witnessDiskName')]",
-                "createOption": "attach",
-                "managedDisk": {
-                    "id": "[resourceId('Microsoft.Compute/disks/', variables('witnessDiskName'))]"
-                }
-            },
-            {
-                "lun": 3,
                 "name": "[variables('msdtcDiskName')]",
                 "createOption": "attach",
                 "managedDisk": {
                     "id": "[resourceId('Microsoft.Compute/disks/', variables('msdtcDiskName'))]"
                 }
+            },
+            {
+                "lun": 3,
+                "name": "[variables('witnessDiskName')]",
+                "createOption": "attach",
+                "managedDisk": {
+                    "id": "[resourceId('Microsoft.Compute/disks/', variables('witnessDiskName'))]"
+                }
             }
         ],
-        "diskArray": "[if(parameters('combineDataAndLogDisk'),if(equals(parameters('witnessType'),'Cloud'),take(variables('dataDisks'),1),createArray(first(variables('dataDisks')),last(variables('dataDisks')))),if(equals(parameters('witnessType'),'Cloud'),take(variables('dataDisks'),2),variables('dataDisks')))]",
+        "diskArray": "[if(equals(parameters('witnessType'),'Cloud'),take(variables('dataDisks'),sub(length(variables('dataDisks')),1)),variables('dataDisks'))]",
         "existingSubnetResourceID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'), parameters('existingSqlSubnetName'))]",
         "witnessStorageName": "[concat(parameters('namePrefix'),'w',uniqueString(resourceGroup().name))]",
         "witnessStorageType": "Standard_LRS",
@@ -345,7 +338,6 @@
             "type": "Microsoft.Compute/disks",
             "location": "[parameters('location')]",
             "apiVersion": "2019-07-01",
-            "condition": "[not(parameters('combineDataAndLogDisk'))]",
             "sku": {
                 "name": "Premium_LRS"
             },
