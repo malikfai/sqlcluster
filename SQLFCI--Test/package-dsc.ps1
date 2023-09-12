@@ -7,9 +7,9 @@ try {
     $tempModulePaths += [system.io.path]::Combine($PSScriptRoot, 'dsc', 'modules')
     $env:PSModulePath = $($tempModulePaths -Join ';')
 
-
-    Publish-AzVMDscConfiguration -ConfigurationPath "$PSScriptRoot\dsc\ConfigureCluster.ps1" -OutputArchivePath "$PSScriptRoot\dsc\ConfigureCluster.ps1.zip" -Force
-    Publish-AzVMDscConfiguration -ConfigurationPath "$PSScriptRoot\dsc\PrepareClusterNode.ps1" -OutputArchivePath "$PSScriptRoot\dsc\PrepareClusterNode.ps1.zip" -Force
+    Publish-AzVMDscConfiguration -ConfigurationPath "$PSScriptRoot\dsc\CreateFileShareWitness.ps1" -OutputArchivePath "$PSScriptRoot\dsc\CreateFileShareWitness.ps1.zip" -Force
+    Publish-AzVMDscConfiguration -ConfigurationPath "$PSScriptRoot\dsc\SqlClusterNode1.ps1" -OutputArchivePath "$PSScriptRoot\dsc\SqlClusterNode1.ps1.zip" -Force
+    Publish-AzVMDscConfiguration -ConfigurationPath "$PSScriptRoot\dsc\SqlClusterNode2.ps1" -OutputArchivePath "$PSScriptRoot\dsc\SqlClusterNode2.ps1.zip" -Force
 }
 finally {
     $env:PSModulePath = $originalModulePath
