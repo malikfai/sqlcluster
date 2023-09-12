@@ -137,6 +137,17 @@
             },
             "defaultValue": "Cloud"
         },
+        "witnessStorageEndpoint": {
+            "type": "string",
+            "allowedValues":[
+                "core.usgovcloudapi.net",
+                "core.windows.net"
+            ],
+            "metadata": {
+                "description": "Cloud Witness Endpoint"
+            },
+            "defaultValue": "core.usgovcloudapi.net"
+        },
         "_artifactsLocation": {
             "type": "string",
             "defaultValue": "[deployment().properties.templateLink.uri]"
@@ -622,7 +633,7 @@
                         "dataDiskSizeGB": "[parameters('dataDiskSizeGB')]",
                         "witnessType": "[parameters('witnessType')]",
                         "witnessStorageName": "[if(equals(parameters('witnessType'),'Cloud'),variables('witnessStorageName'),'')]",
-                        "witnessStorageEndpoint": "[if(equals(parameters('witnessType'),'Cloud'),reference(variables('witnessStorageName')).primaryEndpoints.blob,'')]",
+                        "witnessStorageEndpoint": "[if(equals(parameters('witnessType'),'Cloud'),parameters('witnessStorageEndpoint'),'')]",
                         "listenerIPAddress1": "[reference(variables('ilbName')).frontendIPConfigurations[0].properties.privateIPAddress]",
                         "listenerIPAddress2": "[if(equals(variables('clusterIpNeed'),2),reference(variables('ilbName')).frontendIPConfigurations[1].properties.privateIPAddress,'0.0.0.0')]",
                         "listenerProbePort1": "[variables('ilbProbePorts')[0].properties.port]",
