@@ -210,7 +210,7 @@
                 }
             }
         ],
-        "diskArray": "[if(equals(parameters('witnessType'),'Cloud'),take(variables('dataDisks'),sub(length(variables('dataDisks')),1)),variables('dataDisks')))]",
+        "diskArray": "[if(equals(parameters('witnessType'),'Cloud'),take(variables('dataDisks'),sub(length(variables('dataDisks')),1)),variables('dataDisks'))]",
         "existingSubnetResourceID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'), parameters('existingSqlSubnetName'))]",
         "witnessStorageName": "[concat(parameters('namePrefix'),'w',uniqueString(resourceGroup().name))]",
         "witnessStorageType": "Standard_LRS",
