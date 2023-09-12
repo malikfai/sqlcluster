@@ -124,7 +124,7 @@
             "metadata": {
                 "description": "Should Data and Logs be combined on a single shared disk?"
             },
-            "defaultValue": true
+            "defaultValue": false
         },
         "witnessType": {
             "type": "string",
