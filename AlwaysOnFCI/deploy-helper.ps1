@@ -11,7 +11,7 @@ $existingSqlServiceAccountPassword = "!Welcome2023" #Read-Host -MaskInput -Promp
 $existingSqlSubnetName = "sqlSubnet"
 $existingVirtualNetworkName = "autohav2VNEThef"
 $witnessType = "Cloud"
-$_artifactsLocation = "https://raw.githubusercontent.com/malikfai/sqlcluster/main/sqlfci/"
+$_artifactsLocation = "https://raw.githubusercontent.com/malikfai/sqlcluster/main/AlwaysOnFCI/"
 
 $templateParameterObject = @{
     "namePrefix" = $namePrefix
