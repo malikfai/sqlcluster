@@ -22,6 +22,12 @@ configuration ConfigureCluster
         [String]$SQLClusterName,
 
         [Parameter(Mandatory)]
+        [String]$SqlMsdtcName,
+
+        [Parameter(Mandatory)]
+        [String]$sqlMsdtcIPAddress,
+
+        [Parameter(Mandatory)]
         [String]$NamePrefix,
 
         [Parameter(Mandatory)]
@@ -29,9 +35,6 @@ configuration ConfigureCluster
 
         [Parameter(Mandatory)]
         [String]$WitnessType,
-
-        [Parameter(Mandatory)]
-        [String]$sqlMsdtcIPAddress,
 
         [Parameter(Mandatory)]
         [String]$ListenerIPAddress1,
