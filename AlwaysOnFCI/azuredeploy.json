@@ -156,6 +156,12 @@
             },
             "defaultValue": "core.usgovcloudapi.net"
         },
+        "sqlMsdtcIPAddress": {
+            "type": "string",
+            "metadata": {
+              "description": "IP Address of MSDTC"
+            }
+          },
         "_artifactsLocation": {
             "type": "string",
             "defaultValue": "[split(deployment().properties.templateLink.uri, '/azuredeploy.json')[0]]"
@@ -289,7 +295,8 @@
         "clusterConfigScript": "ConfigureCluster.ps1",
         "clusterConfigFunction": "ConfigureCluster",
         "clusterName": "[concat(parameters('namePrefix'),'c')]",
-        "sqlClusterName": "[concat(parameters('namePrefix'),'sql')]"
+        "sqlClusterName": "[concat(parameters('namePrefix'),'sql')]",
+        "sqlMsdtcName": "[concat(parameters('namePrefix'),'Dtc1')]"
     },
     "resources": [
         {
@@ -662,6 +669,8 @@
                         "domainName": "[parameters('existingDomainName')]",
                         "clusterName": "[variables('clusterName')]",
                         "sqlClusterName": "[variables('sqlClusterName')]",
+                        "sqlMsdtcName": "[variables('sqlMsdtcName')]",
+                        "sqlMsdtcIPAddress": "[parameters('sqlMsdtcIPAddress')]",
                         "namePrefix": "[parameters('namePrefix')]",
                         "vmCount": "[variables('vmCount')]",
                         "dataDiskSizeGB": "[parameters('dataDiskSizeGB')]",
@@ -703,6 +712,10 @@
         "sqlClusterName": {
             "type": "string",
             "value": "[concat(variables('sqlClusterName'),'.',parameters('existingDomainName'))]"
+        },
+        "sqlMsdtcName": {
+            "type": "string",
+            "value": "[concat(variables('sqlMsdtcName'),'.',parameters('existingDomainName'))]"
         },
         "sqlClusterIp": {
             "type": "string",
