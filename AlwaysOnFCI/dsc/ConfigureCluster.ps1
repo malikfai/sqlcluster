@@ -31,6 +31,9 @@ configuration ConfigureCluster
         [String]$WitnessType,
 
         [Parameter(Mandatory)]
+        [String]$sqlMsdtcIPAddress,
+
+        [Parameter(Mandatory)]
         [String]$ListenerIPAddress1,
 
         [String]$ListenerIPAddress2 = "0.0.0.0",
