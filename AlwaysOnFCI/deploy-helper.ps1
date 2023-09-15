@@ -12,7 +12,7 @@ $existingSqlSubnetName = "sqlSubnet"
 $existingVirtualNetworkName = "autohav2VNEThef"
 $witnessType = "Cloud"
 $sqlMsdtcIPAddress = "10.0.1.19"
-$_artifactsLocation = "https://raw.githubusercontent.com/malikfai/sqlcluster/main/AlwaysOnFCI/"
+$_artifactsLocation = "https://raw.githubusercontent.com/malikfai/sqlcluster/fmalik-AlwaysOnFCI/AlwaysOnFCI/"
 
 $templateParameterObject = @{
     "namePrefix" = $namePrefix

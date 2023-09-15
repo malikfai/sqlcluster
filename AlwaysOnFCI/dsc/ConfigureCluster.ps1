@@ -205,6 +205,13 @@ configuration ConfigureCluster
             GetScript  = "@{Ensure = if ((Get-ClusterGroup -Name 'SQL Server (MSSQLSERVER)' -ErrorAction SilentlyContinue | Get-ClusterResource | Where-Object ResourceType -eq 'IP Address' -ErrorAction SilentlyContinue | Get-ClusterParameter -Name ProbePort).Value -eq ${ListenerProbePort1}) {'Present'} else {'Absent'}}"
             DependsOn  = "[Script]CompleteClusterSQLRole"
         }
+
+        Script ConfigureMSDTC {
+            SetScript = "`$Disk =  ((Get-ClusterGroup -Name 'Available Storage' | Get-ClusterResource | Where-Object ResourceType -eq 'Physical Disk')[0].Name) | Add-ClusterServerRole -Name ${SqlMsdtcName} -Storage `$Disk -StaticAddress ${sqlMsdtcIPAddress} | Get-ClusterGroup ${SqlMsdtcName} | Add-ClusterResource -Name 'MSDTC-' + ${SqlMsdtcName} -ResourceType 'Distributed Transaction Coordinator' | Add-ClusterResourceDependency 'MSDTC-' + ${SqlMsdtcName} | Add-ClusterResourceDependency 'MSDTC-' + `$Disk | Start-ClusterGroup ${SqlMsdtcName}"
+            TestScript = "(Get-ClusterGroup -Name 'Available Storage' -ErrorAction SilentlyContinue).Count -gt 0"
+            GetScript  = "@{Ensure = if ((Get-ClusterGroup -Name 'Available Storage' -ErrorAction SilentlyContinue).Count -gt 0) {'Present'} else {'Absent'}}"
+            DependsOn  = "[Script]SQLIPAddress"
+        }
         
         Script FirewallRuleProbePort1 {
             SetScript  = "Remove-NetFirewallRule -DisplayName 'Failover Cluster - Probe Port 1' -ErrorAction SilentlyContinue; New-NetFirewallRule -DisplayName 'Failover Cluster - Probe Port 1' -Profile Domain -Direction Inbound -Action Allow -Enabled True -Protocol 'tcp' -LocalPort ${ListenerProbePort1}"
